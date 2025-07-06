@@ -1,43 +1,49 @@
-# import streamlit as st
-# from utils import nse_data
-
-# # Title
-# st.set_page_config(page_title="CandleScan India — All-In-One Stock Scanner", layout="wide")
-# st.title("🕯️ CandleScan India — All-In-One Stock Scanner")
-
-# # Load stock list
-# try:
-#     df_stocks = nse_data.load_stocks()
-#     st.success(f"✅ Loaded {len(df_stocks)} stocks from NSE")
-#     st.dataframe(df_stocks)
-# except Exception as e:
-#     st.error(f"❌ Error loading stock list: {e}")
-
-
 import streamlit as st
-from utils import nse_data
-from scans import candlestick, volume_scans, price_scans, trend_scans, combo_scanner
+import pandas as pd
+from scans import candlestick
 
-st.set_page_config(page_title="CandleScan India", layout="wide")
+st.set_page_config(page_title="CandleScan India", layout="centered")
 
-# Load stock data
-df_stocks = nse_data.load_stocks()
+st.markdown(
+    "<h2 style='text-align:center;'>🕯️ CandleScan India</h2>", 
+    unsafe_allow_html=True
+)
+st.markdown("<p style='text-align:center;'>Smart scanner for Indian stocks based on candlestick patterns</p>", unsafe_allow_html=True)
 
-st.title("🇮🇳 CandleScan India - Indian Stock Market Scanner")
-st.success(f"Scanning {len(df_stocks)} stocks from NSE")
+# Load stocks from CSV
+try:
+    df_stocks = pd.read_csv("data/nse_stock_list.csv")
+    stock_list = df_stocks["Symbol"].dropna().tolist()
+except FileNotFoundError:
+    st.error("Stock list not found. Please add 'data/nse_stock_list.csv'.")
+    st.stop()
 
-# Sections
-st.header("🕯️ Candlestick Pattern Scanner")
-candlestick.display(df_stocks)
+# Pattern list from candlestick module
+pattern_map = {
+    "Hammer": candlestick.scan_hammer,
+    "Inverted Hammer": candlestick.scan_inverted_hammer,
+    "Doji": candlestick.scan_doji,
+    "Bullish Engulfing": candlestick.scan_bullish_engulfing,
+    "Bearish Engulfing": candlestick.scan_bearish_engulfing,
+    "Morning Star": candlestick.scan_morning_star,
+    "Shooting Star": candlestick.scan_shooting_star,
+    "Evening Star": candlestick.scan_evening_star,
+    "Hanging Man": candlestick.scan_hanging_man,
+    "Spinning Top": candlestick.scan_spinning_top,
+}
 
-st.header("📊 Volume Based Scans")
-volume_scans.display(df_stocks)
+st.markdown("### 🔍 Select a Candlestick Pattern")
+selected_pattern = st.selectbox(
+    "Start typing to search...",
+    options=list(pattern_map.keys()),
+    index=0
+)
 
-st.header("📈 Price Action Scans")
-price_scans.display(df_stocks)
+# Optional: date range or duration for candle
+st.markdown("### 📅 Select Candle Duration")
+duration = st.radio("Select time range", ["5d", "10d", "1mo"], horizontal=True)
 
-st.header("🔥 Trending Stocks")
-trend_scans.display()
+st.markdown("---")
+st.markdown("### 📊 Scan Results")
 
-st.header("🧠 Combine Multiple Scans")
-combo_scanner.display(df_stocks)
+scanner_function =_
