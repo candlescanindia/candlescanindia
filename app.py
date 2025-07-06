@@ -4,29 +4,29 @@ import yfinance as yf
 
 st.set_page_config(page_title="CandleScanIndia", layout="wide")
 st.title("📊 CandleScanIndia")
-st.caption("India’s Real-Time NSE Candlestick Pattern Scanner")
+st.caption("Real-Time NSE Candlestick Pattern Scanner")
 
-# Sidebar
+# --- Sidebar ---
 with st.sidebar:
-    st.header("📘 About")
+    st.header("ℹ️ About")
     st.markdown("""
-    **CandleScanIndia** scans NSE stocks for popular candlestick patterns using real-time Yahoo Finance data.
+    **CandleScanIndia** scans Indian NSE stocks for popular candlestick patterns.
     
-    - Real-time pattern detection  
-    - Filter by volume and market cap  
+    - Uses real-time Yahoo Finance data  
+    - Supports filters for volume and market cap  
     """)
     st.markdown("---")
 
-# User Inputs
+# --- Pattern List ---
 patterns = [
     "Hammer", "Inverted Hammer", "Doji", "Bullish Engulfing", "Bearish Engulfing",
     "Shooting Star", "Morning Star", "Evening Star"
 ]
 pattern = st.selectbox("📌 Select Candlestick Pattern", patterns)
 min_volume = st.number_input("📈 Min Volume (in millions)", value=1.0)
-min_market_cap = st.number_input("🏦 Min Market Cap (in crores)", value=10000.0)
+min_mcap = st.number_input("🏦 Min Market Cap (in crores)", value=10000.0)
 
-# Stocks
+# --- NSE Stock List ---
 stock_symbols = [
     "RELIANCE.NS", "INFY.NS", "TCS.NS", "HDFCBANK.NS", "ICICIBANK.NS", "SBIN.NS", "LT.NS",
     "AXISBANK.NS", "HINDUNILVR.NS", "ITC.NS", "WIPRO.NS", "TATAMOTORS.NS", "BAJFINANCE.NS",
@@ -34,7 +34,7 @@ stock_symbols = [
     "SUNPHARMA.NS", "ULTRACEMCO.NS", "POWERGRID.NS", "NTPC.NS", "JSWSTEEL.NS", "COALINDIA.NS"
 ]
 
-# Pattern Logic
+# --- Pattern Functions ---
 def is_hammer(o, h, l, c):
     body = abs(c - o)
     lower = min(o, c) - l
@@ -78,10 +78,11 @@ def is_evening_star(p1, p2, p3):
         p3["Close"] < ((p1["Close"] + p1["Open"]) / 2)
     )
 
-# Button Action
+# --- Run Scan ---
 if st.button("🔍 Run Scan"):
-    matched = []
-    with st.spinner("Scanning NSE..."):
+    results = []
+
+    with st.spinner("Scanning stocks..."):
         for symbol in stock_symbols:
             try:
                 df = yf.download(symbol, period="10d", interval="1d")
@@ -90,47 +91,55 @@ if st.button("🔍 Run Scan"):
                 if df is None or df.empty or len(df) < 5:
                     continue
 
+                # Scalars for pattern
                 latest = df.iloc[-2]
                 prev = df.iloc[-3]
                 prev2 = df.iloc[-4]
 
-                o = latest["Open"]
-                h = latest["High"]
-                l = latest["Low"]
-                c = latest["Close"]
-                po = prev["Open"]
-                pc = prev["Close"]
+                o = float(latest["Open"])
+                h = float(latest["High"])
+                l = float(latest["Low"])
+                c = float(latest["Close"])
+                po = float(prev["Open"])
+                pc = float(prev["Close"])
 
                 # Filters
-                vol_million = latest["Volume"] / 1e6
-                mcap_crore = info.get("marketCap", 0) / 1e7
-                if vol_million < min_volume or mcap_crore < min_market_cap:
+                volume_m = float(latest["Volume"] / 1e6)
+                mcap_cr = float(info.get("marketCap", 0) / 1e7)
+                if volume_m < min_volume or mcap_cr < min_mcap:
                     continue
 
-                # Pattern checks
-                match = (
-                    (pattern == "Hammer" and is_hammer(o, h, l, c)) or
-                    (pattern == "Inverted Hammer" and is_inverted_hammer(o, h, l, c)) or
-                    (pattern == "Doji" and is_doji(o, h, l, c)) or
-                    (pattern == "Bullish Engulfing" and is_bullish_engulfing(po, pc, o, c)) or
-                    (pattern == "Bearish Engulfing" and is_bearish_engulfing(po, pc, o, c)) or
-                    (pattern == "Shooting Star" and is_shooting_star(o, h, l, c)) or
-                    (pattern == "Morning Star" and is_morning_star(prev2, prev, latest)) or
-                    (pattern == "Evening Star" and is_evening_star(prev2, prev, latest))
-                )
+                # Match Pattern
+                matched = False
+                if pattern == "Hammer":
+                    matched = is_hammer(o, h, l, c)
+                elif pattern == "Inverted Hammer":
+                    matched = is_inverted_hammer(o, h, l, c)
+                elif pattern == "Doji":
+                    matched = is_doji(o, h, l, c)
+                elif pattern == "Bullish Engulfing":
+                    matched = is_bullish_engulfing(po, pc, o, c)
+                elif pattern == "Bearish Engulfing":
+                    matched = is_bearish_engulfing(po, pc, o, c)
+                elif pattern == "Shooting Star":
+                    matched = is_shooting_star(o, h, l, c)
+                elif pattern == "Morning Star":
+                    matched = is_morning_star(prev2, prev, latest)
+                elif pattern == "Evening Star":
+                    matched = is_evening_star(prev2, prev, latest)
 
-                if match:
-                    matched.append({
-                        "Symbol": symbol,
-                        "Volume (M)": round(vol_million, 2),
-                        "Market Cap (Cr)": round(mcap_crore, 2)
+                if matched:
+                    results.append({
+                        "Symbol": symbol.replace(".NS", ""),
+                        "Volume (M)": round(volume_m, 2),
+                        "Market Cap (Cr)": round(mcap_cr, 2)
                     })
 
             except Exception as e:
-                st.warning(f"⚠️ {symbol}: {e}")
+                st.warning(f"⚠️ Error with {symbol}: {e}")
 
-    if matched:
-        st.success(f"✅ {len(matched)} stocks matched")
-        st.dataframe(pd.DataFrame(matched))
+    if results:
+        st.success(f"✅ Found {len(results)} stock(s) matching '{pattern}'")
+        st.dataframe(pd.DataFrame(results))
     else:
-        st.info("🙁 No stocks matched your criteria.")
+        st.info("🙁 No matching stocks found.")
