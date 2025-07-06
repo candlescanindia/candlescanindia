@@ -1,0 +1,1 @@
+# Makes 'scans' a package
