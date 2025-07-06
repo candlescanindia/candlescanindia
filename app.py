@@ -28,4 +28,19 @@ pattern_list = [
     "Doji",
     "Inverted Hammer",
     "Shooting Star",
-    "Bullish En
+    "Bullish Engulfing",
+    "Bearish Engulfing",
+    "Morning Star",
+    "Evening Star",
+    "Marubozu",
+    "Hanging Man",
+    "Spinning Top"
+]
+
+# UI dropdown
+selected_pattern = st.selectbox("🔎 Select a Candlestick Pattern", pattern_list)
+
+# Trigger button
+if st.button("🔍 Run Scan"):
+    st.success(f"Scanning {len(df)} stocks for pattern: {selected_pattern}...")
+    st.info("🔧 Pattern detection engine coming soon.")
