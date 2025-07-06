@@ -95,6 +95,17 @@ def scan_hanging_man(symbol, period="5d"):
     last = df.iloc[-1]
     body = abs(last["Close"] - last["Open"])
     lower_wick = min(last["Close"], last["Open"]) - last["Low"]
+
+def scan_spinning_top(symbol, period="5d"):
+    df = _get_recent_candle(symbol, period)
+    if df is None:
+        return False
+    last = df.iloc[-1]
+    body = abs(last["Close"] - last["Open"])
+    candle_range = last["High"] - last["Low"]
+
+    return body <= 0.3 * candle_range
+
     upper_wick = last["High"] - max(last["Close"], last["Open"])
 
     return lower_wick > 2 * body and upper_wick < body and last["Close"] < last["Open"]
