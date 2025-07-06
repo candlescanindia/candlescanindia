@@ -4,36 +4,18 @@ import pandas as pd
 st.set_page_config(page_title="CandleScanIndia", layout="wide")
 st.title("📊 CandleScanIndia - NSE Candlestick Pattern Scanner")
 
-# Show error details in UI
+# Show detailed error messages
 st.set_option('client.showErrorDetails', True)
 
-# Load CSV
-try:
-    df = pd.read_csv("nse_stocks.csv")
-    st.write(f"✅ Loaded {len(df)} stock symbols.")
-except Exception as e:
-    st.error(f"❌ Could not load nse_stocks.csv: {e}")
-    st.stop()
-
-# Patterns dropdown
-pattern_list = [
-    "Hammer",
-    "Doji",
-    "Inverted Hammer",
-    "Shooting Star",
-    "Bullish Engulfing",
-    "Bearish Engulfing",
-    "Morning Star",
-    "Evening Star",
-    "Marubozu",
-    "Hanging Man",
-    "Spinning Top"
+# 🔧 Hardcoded NSE stock symbols
+stock_symbols = [
+    "RELIANCE.NS", "INFY.NS", "TCS.NS", "HDFCBANK.NS", "ICICIBANK.NS",
+    "LT.NS", "SBIN.NS", "AXISBANK.NS", "HINDUNILVR.NS", "ITC.NS",
+    "BAJFINANCE.NS", "BHARTIARTL.NS", "ASIANPAINT.NS", "KOTAKBANK.NS", "WIPRO.NS",
+    "ONGC.NS", "HCLTECH.NS", "SUNPHARMA.NS", "ULTRACEMCO.NS", "POWERGRID.NS",
+    "NTPC.NS", "TECHM.NS", "TITAN.NS", "JSWSTEEL.NS", "ADANIENT.NS",
+    "COALINDIA.NS", "DIVISLAB.NS", "NESTLEIND.NS", "HDFCLIFE.NS", "TATAMOTORS.NS",
+    "BPCL.NS", "CIPLA.NS", "BRITANNIA.NS", "HEROMOTOCO.NS", "GRASIM.NS"
 ]
 
-# UI dropdown
-selected_pattern = st.selectbox("🔎 Select a Candlestick Pattern", pattern_list)
-
-# Trigger button
-if st.button("🔍 Run Scan"):
-    st.success(f"Scanning {len(df)} stocks for pattern: {selected_pattern}...")
-    st.info("🔧 Pattern detection coming soon. This is a working UI demo.")
+df = pd.DataFrame(stock_symbols, col_
