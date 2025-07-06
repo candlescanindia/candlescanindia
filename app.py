@@ -34,4 +34,14 @@ with st.container():
 if st.button("🚀 Scan for Pattern"):
     if selected_pattern:
         results = []
-        with
+        with st.spinner("Scanning stocks..."):
+            for symbol in df_stocks["Symbol"]:
+                try:
+                    if selected_pattern(symbol):
+                        results.append(symbol)
+                except Exception as e:
+                    st.warning(f"⚠️ Error with {symbol}: {e}")
+        st.success(f"✅ Found {len(results)} stocks matching pattern: {pattern_name}")
+        st.dataframe(results)
+    else:
+        st.warning("Please select a valid pattern.")
