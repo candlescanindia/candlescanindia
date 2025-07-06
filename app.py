@@ -18,4 +18,14 @@ stock_symbols = [
     "BPCL.NS", "CIPLA.NS", "BRITANNIA.NS", "HEROMOTOCO.NS", "GRASIM.NS"
 ]
 
-df = pd.DataFrame(stock_symbols, col_
+# Create a DataFrame from hardcoded symbols
+df = pd.DataFrame(stock_symbols, columns=["Symbol"])
+st.write(f"✅ Loaded {len(df)} hardcoded stock symbols.")
+
+# 🕯️ Candlestick pattern dropdown
+pattern_list = [
+    "Hammer",
+    "Doji",
+    "Inverted Hammer",
+    "Shooting Star",
+    "Bullish En
