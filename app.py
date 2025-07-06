@@ -35,4 +35,5 @@ selected_pattern = st.selectbox("🔎 Select a Candlestick Pattern", pattern_lis
 
 # Trigger button
 if st.button("🔍 Run Scan"):
-    st.success(f"Scanning {len(df)} sto
+    st.success(f"Scanning {len(df)} stocks for pattern: {selected_pattern}...")
+    st.info("🔧 Pattern detection coming soon. This is a working UI demo.")
