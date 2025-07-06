@@ -1,1 +1,4 @@
-# Placeholder for trend_scans.py
+import streamlit as st
+
+def display():
+    st.write("Top Gainers / Losers section coming soon.")
