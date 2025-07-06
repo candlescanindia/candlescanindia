@@ -1,1 +1,4 @@
-# Placeholder for combo_scanner.py
+import streamlit as st
+
+def display(df):
+    st.write("Combine scans feature coming soon.")
