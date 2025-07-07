@@ -11,7 +11,7 @@ from ui.components import (
 
 # Load stock list (can be up to 100-500 depending on performance)
 df_stocks = data_loader.load_stocks()
-stock_list = df_stocks["symbol"].tolist()
+stock_list = df_stocks["Symbol"].tolist()
 
 # --- Layout Start ---
 st.set_page_config(page_title="CandleScan India", layout="wide")
