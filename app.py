@@ -13,7 +13,7 @@ st.divider()
 # ------------------ Load Stock Data ------------------ #
 with st.spinner("🔄 Loading stock list..."):
     df_stocks = data_loader.load_stocks()  # Load from utils/data_loader.py
-    stock_list = df_stocks["symbol"].tolist()
+    stock_list = df_stocks["Symbol"].tolist()
 
 # ------------------ Pattern Dropdown ------------------ #
 st.markdown("### 🕯️ Select Candlestick Pattern")
