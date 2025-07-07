@@ -5,7 +5,7 @@ from datetime import datetime
 
 # Load stock symbols
 df_stocks = data_loader.load_stocks()
-stock_list = df_stocks["symbol"].tolist()
+stock_list = df_stocks["Symbol"].tolist()
 
 # Supported intervals for yfinance
 interval_map = {
