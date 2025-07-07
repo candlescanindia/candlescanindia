@@ -1,48 +1,52 @@
 import streamlit as st
-from datetime import datetime
-from scans import candlestick
 from utils import data_loader
-from ui.components import header_section, filter_section, pattern_selector, result_display, highlights_box
+from scans import candlestick
+from ui.components import (
+    header_section,
+    filter_section,
+    pattern_selector,
+    result_display,
+    highlights_box
+)
 
-# Load stock data
-st.set_page_config(page_title="CandleScan India", layout="wide")
+# Load stock list (can be up to 100-500 depending on performance)
 df_stocks = data_loader.load_stocks()
+stock_list = df_stocks["symbol"].tolist()
 
-# 1. Header
+# --- Layout Start ---
+st.set_page_config(page_title="CandleScan India", layout="wide")
 header_section()
 
-# 2. Duration and Filter section
+# --- Top Filters ---
 col1, col2 = st.columns([2, 1])
 with col1:
-    selected_duration = st.selectbox(
-        "Select Chart Duration",
-        options=["15 min", "30 min", "1 day", "1 week"],
-        index=2,
-        format_func=lambda x: x.title(),
-        key="chart_duration"
-    )
+    duration = st.selectbox("Select Chart Duration", ["15m", "30m", "1d", "1wk"], index=2)
 with col2:
-    filter_section()
+    show_filters = filter_section()
 
-# 3. Pattern selection
+# --- Pattern Selection ---
 selected_pattern = pattern_selector()
 
-# 4. Scan button and result
-if st.button("🔍 Scan", use_container_width=True):
-    matching_stocks = []
-    current_time = datetime.now().strftime("%d-%b-%Y %I:%M %p")
+# --- Search Field ---
+search_stock = st.text_input("🔍 Search stock symbol", placeholder="Type stock symbol (e.g. RELIANCE)", label_visibility="collapsed")
 
-    with st.spinner("Scanning stocks..."):
-        for symbol in df_stocks["symbol"]:
+# --- Scan Button ---
+if st.button("🔎 Scan Now"):
+    matched_stocks = []
+    pattern_function = getattr(candlestick, f"scan_{selected_pattern.lower().replace(' ', '_')}", None)
+
+    if pattern_function:
+        for symbol in stock_list:
+            if search_stock and search_stock.lower() not in symbol.lower():
+                continue
             try:
-                scan_func = getattr(candlestick, f"scan_{selected_pattern.lower().replace(' ', '_')}")
-                if scan_func(symbol):
-                    matching_stocks.append(symbol)
+                matched = pattern_function(symbol, period="5d")  # use duration map later
+                if matched:
+                    matched_stocks.append(symbol)
             except Exception as e:
-                st.warning(f"Error scanning {symbol}: {e}")
+                print(f"Error with {symbol}: {e}")
 
-    result_display(selected_pattern, matching_stocks, current_time)
-    highlights_box(selected_pattern, matching_stocks)
-else:
-    st.markdown("<br>", unsafe_allow_html=True)
-    highlights_box(None, [])
+        result_display(matched_stocks, selected_pattern)
+        highlights_box(matched_stocks, selected_pattern)
+    else:
+        st.error("Selected pattern is not available yet.")
