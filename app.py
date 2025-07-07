@@ -1,25 +1,20 @@
 import streamlit as st
-from scans import candlestick
 from utils import data_loader
-import pandas as pd
+from scans import candlestick
+from datetime import datetime
 
-# ------------------ Page Setup ------------------ #
-st.set_page_config(page_title="CandleScan India", layout="wide")
+# Load stock symbols
+df_stocks = data_loader.load_stocks()
+stock_list = df_stocks["symbol"].tolist()
 
-st.markdown("<h1 style='text-align: center;'>📊 CandleScan India</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center;'>Smart scanner for Indian stocks based on candlestick patterns</p>", unsafe_allow_html=True)
-st.divider()
+# Supported intervals for yfinance
+interval_map = {
+    "15 minutes": "15m",
+    "Daily": "1d",
+    "Weekly": "1wk"
+}
 
-# ------------------ Load Stock Data ------------------ #
-with st.spinner("🔄 Loading stock list..."):
-    df_stocks = data_loader.load_stocks()  # Load from utils/data_loader.py
-    stock_list = df_stocks["Symbol"].tolist()
-
-# ------------------ Pattern Dropdown ------------------ #
-st.markdown("### 🕯️ Select Candlestick Pattern")
-
-# Pattern mapping to function
-candlestick_patterns = {
+pattern_functions = {
     "Hammer": candlestick.scan_hammer,
     "Inverted Hammer": candlestick.scan_inverted_hammer,
     "Doji": candlestick.scan_doji,
@@ -28,39 +23,41 @@ candlestick_patterns = {
     "Morning Star": candlestick.scan_morning_star,
     "Evening Star": candlestick.scan_evening_star,
     "Shooting Star": candlestick.scan_shooting_star,
+    "Hanging Man": candlestick.scan_hanging_man,
     "Spinning Top": candlestick.scan_spinning_top,
     "Marubozu": candlestick.scan_marubozu
 }
 
-selected_pattern = st.selectbox(
-    label="",
-    options=list(candlestick_patterns.keys()),
-    index=0,
-    placeholder="Type or select pattern",
-    label_visibility="collapsed"
-)
+# --- UI ---
+st.set_page_config(page_title="CandleScan India", layout="centered")
+st.markdown("### 📈 CandleScan India")
+st.markdown("_Smart scanner for Indian stocks based on candlestick patterns_")
 
-# ------------------ Scan Button ------------------ #
-if st.button("🔎 Scan Stocks"):
-    with st.spinner(f"Scanning {len(stock_list)} stocks for {selected_pattern}..."):
-        scan_function = candlestick_patterns[selected_pattern]
-        results = []
+col1, col2 = st.columns(2)
+with col1:
+    selected_interval = st.selectbox("Chart Duration", list(interval_map.keys()))
+with col2:
+    selected_pattern = st.selectbox("Select Candlestick Pattern", list(pattern_functions.keys()))
 
-        for symbol in stock_list:
-            try:
-                result = scan_function(symbol)
-                if result is not None:
-                    results.append(result)
-            except Exception as e:
-                st.warning(f"⚠️ Error with {symbol}: {e}")
+if st.button("🔍 Scan"):
+    st.info(f"Scanning {len(stock_list)} stocks for **{selected_pattern}** pattern on **{selected_interval}** charts...")
 
-        if results:
-            st.success(f"✅ Found {len(results)} stocks matching {selected_pattern}")
-            result_df = pd.concat(results).reset_index(drop=True)
-            st.dataframe(result_df, use_container_width=True)
-        else:
-            st.info("No matching stocks found.")
+    matched_stocks = []
+    pattern_fn = pattern_functions[selected_pattern]
+    interval = interval_map[selected_interval]
 
-# ------------------ Footer ------------------ #
-st.divider()
-st.markdown("<p style='text-align:center;'>Made with ❤️ for Indian stock traders</p>", unsafe_allow_html=True)
+    for symbol in stock_list:
+        try:
+            result = pattern_fn(symbol, period="5d", interval=interval)
+            if result:
+                matched_stocks.append((symbol, datetime.now().strftime("%Y-%m-%d %H:%M")))
+        except Exception as e:
+            st.warning(f"{symbol}: {e}")
+
+    if matched_stocks:
+        count = len(matched_stocks)
+        with st.expander(f"✅ {count} stocks formed {selected_pattern} pattern today. Click to view"):
+            for symbol, timestamp in matched_stocks:
+                st.markdown(f"**{symbol}** — Detected on `{timestamp}`")
+    else:
+        st.error(f"No stock found with {selected_pattern} pattern.")
