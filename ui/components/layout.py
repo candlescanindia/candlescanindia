@@ -1,7 +1,7 @@
 # ui/components/layout.py
 import streamlit as st
 from datetime import datetime
-from st_pages import add_indented_title  # optional, remove if unused
+# from st_pages import add_indented_title  # optional, remove if unused
 
 def header_section():
     st.markdown("""
