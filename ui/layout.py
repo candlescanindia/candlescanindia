@@ -1,8 +1,10 @@
+# ui/layout.py
+
 import streamlit as st
 from datetime import datetime
 
-# ---------------- Header Section ----------------
-def header_section():
+# ---------------- Header ----------------
+def render_header():
     st.markdown("""
         <style>
         .main-title {
@@ -21,16 +23,15 @@ def header_section():
     st.markdown("---")
 
 
-# ---------------- Filter Section ----------------
-def filter_section():
+# ---------------- Filters ----------------
+def render_filters():
     with st.expander("➕ Add Optional Filters"):
-        st.info("Filter options coming soon (e.g. price, volume, sector, etc.)")
+        st.info("Filter options coming soon (e.g. market cap, price, volume, sector, etc.)")
     return True  # Placeholder return
 
 
 # ---------------- Pattern Selector ----------------
-def pattern_selector():
-    # You can expand this list later or load dynamically
+def render_pattern_selector():
     patterns = [
         "Bullish Engulfing",
         "Bearish Engulfing",
@@ -43,11 +44,31 @@ def pattern_selector():
     return st.selectbox("📊 Select Candlestick Pattern", patterns)
 
 
-# ---------------- Highlights Section ----------------
-def highlights_box(matched_stocks, selected_pattern):
-    st.markdown("### 🟢 Highlights")
-    st.success(f"🕒 As of {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} — Pattern: **{selected_pattern}**")
-    st.markdown(f"**{len(matched_stocks)} stocks** formed this pattern today:")
-    st.write(", ".join(matched_stocks))
-    st.markdown("---")
+# ---------------- Search Bar ----------------
+def render_search_bar():
+    return st.text_input(
+        "🔍 Search stock symbol",
+        placeholder="Type stock symbol (e.g. RELIANCE)",
+        label_visibility="collapsed"
+    )
 
+
+# ---------------- Results Display ----------------
+def render_results(matched_stocks, selected_pattern):
+    st.markdown("### 🧾 Matched Stocks")
+    if matched_stocks:
+        for stock in matched_stocks:
+            st.success(f"✅ {stock} formed **{selected_pattern}** pattern.")
+    else:
+        st.warning("No matching stocks found.")
+
+
+# ---------------- Highlights Section ----------------
+def render_highlights(matched_stocks, selected_pattern):
+    st.markdown("### 🟢 Highlights")
+    if matched_stocks:
+        st.success(f"🕒 As of {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} — Pattern: **{selected_pattern}**")
+        st.markdown(f"**{len(matched_stocks)} stocks** formed this pattern today:")
+        st.write(", ".join(matched_stocks))
+    else:
+        st.info("
