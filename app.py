@@ -58,4 +58,26 @@ selected_pattern = st.selectbox(
 scan_btn = st.button("🚀 Start Scan")
 
 # --- Scan Logic ---
-if
+if scan_btn:
+    interval = interval_map[selected_interval]
+    pattern_fn = pattern_functions[selected_pattern]
+
+    st.info(f"🔄 Scanning {len(stock_list)} stocks on **{selected_interval}** interval for **{selected_pattern}**...")
+
+    matched = []
+    for symbol in stock_list:
+        try:
+            if pattern_fn(symbol, period="5d", interval=interval):
+                matched.append((symbol, datetime.now().strftime("%Y-%m-%d %H:%M")))
+        except Exception as e:
+            st.warning(f"{symbol}: {e}")
+
+    # --- Display Result Box ---
+    st.markdown("---")
+    if matched:
+        count = len(matched)
+        with st.expander(f"✅ {count} stocks formed {selected_pattern} today (Click to expand)", expanded=True):
+            for sym, dt in matched:
+                st.markdown(f"- **{sym}** — _Detected on {dt}_")
+    else:
+        st.error("❌ No stocks found matching the selected pattern.")
