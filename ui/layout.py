@@ -27,44 +27,40 @@ def render_header():
 def render_top_controls():
     show_filters = False
 
-    # Top-right Filter Icon
-    filter_col = st.columns([10, 1])
-    with filter_col[1]:
+    # Top line: Heading + Filter icon
+    top = st.columns([9, 1])
+    with top[0]:
+        st.markdown("#### 🔎 Market Scanner")
+        st.caption("Quickly scan Indian stocks for classic candlestick patterns")
+    with top[1]:
         if st.button("🧰", help="Add Filters"):
             show_filters = True
 
-    # Scan Line: Duration + Pattern + Scan Button
-    col1, col2, col3 = st.columns([1.2, 2.2, 1])
+    # Second line: Duration + Pattern + Scan Now
+    col1, col2, col3 = st.columns([1.5, 2.5, 1])
     with col1:
-        duration = st.selectbox("⏱️", ["15m", "30m", "1d", "1wk"], index=2, label_visibility="collapsed")
+        st.markdown("**⏱️ Chart Duration**")
+        duration = st.selectbox("", ["15m", "30m", "1d", "1wk"], index=2, label_visibility="collapsed")
+
     with col2:
+        st.markdown("**📊 Pattern**")
         pattern = st.selectbox(
-            "📊",
+            "",
             [
                 "Bullish Engulfing", "Bearish Engulfing", "Doji", "Hammer",
                 "Inverted Hammer", "Morning Star", "Evening Star"
             ],
             label_visibility="collapsed"
         )
+
     with col3:
-        st.markdown("<div style='padding-top: 10px'></div>", unsafe_allow_html=True)
+        st.markdown("**&nbsp;**")  # For alignment
         scan_clicked = st.button("🔎 Scan Now", use_container_width=True)
 
     return duration, pattern, show_filters, scan_clicked
 
 
-# ---------------- Optional Filters ----------------
-def render_filters():
-    with st.expander("⚙️ Advanced Filters"):
-        st.info("Filter options coming soon (e.g. price, volume, sector, etc.)")
-
-
-# ---------------- Section Heading ----------------
-def render_scan_heading():
-    st.markdown("### 🔍 Scan Results")
-
-
-# ---------------- Highlights ----------------
+# ---------------- Highlights Section ----------------
 def render_highlights(matched_stocks, selected_pattern):
     st.markdown("### 🟢 Highlights")
     if matched_stocks:
@@ -72,10 +68,10 @@ def render_highlights(matched_stocks, selected_pattern):
         st.markdown(f"**{len(matched_stocks)} stocks** formed this pattern today:")
         st.write(", ".join(matched_stocks))
     else:
-        st.info("No matching stocks found for this pattern.")
+        st.info("No stocks matched the selected candlestick pattern.")
 
 
-# ---------------- Results ----------------
+# ---------------- Results Display ----------------
 def render_results(matched_stocks, selected_pattern):
     st.markdown("### 🧾 Matched Stocks")
     if matched_stocks:
