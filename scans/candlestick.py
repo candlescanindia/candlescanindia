@@ -63,20 +63,27 @@ def scan_bearish_engulfing(symbol, period="5d"):
 
 def scan_morning_star(symbol, period="5d"):
     df = _get_recent_candle(symbol, period)
-    if df is None or len(df) < 3:
+    if df is None:
         return False
     a, b, c = df.iloc[-3], df.iloc[-2], df.iloc[-1]
     return (
         a["Close"] < a["Open"] and
-        b["Open"] < a["Close"] and b["Close"] < b["Open"] and
-        c["Close"] > c["Open"] and c["Close"] > a["Open"]
+        b["Close"] < b["Open"] and
+        c["Close"] > c["Open"] and
+        c["Close"] > a["Open"]
     )
 
 def scan_evening_star(symbol, period="5d"):
     df = _get_recent_candle(symbol, period)
-    if df is None or len(df) < 3:
+    if df is None:
         return False
-    a, b, c = df.iloc[-3], df.iloc[-2], df.i
+    a, b, c = df.iloc[-3], df.iloc[-2], df.iloc[-1]
+    return (
+        a["Close"] > a["Open"] and
+        b["Close"] > b["Open"] and
+        c["Close"] < c["Open"] and
+        c["Close"] < a["Open"]
+    )
 
 def scan_shooting_star(symbol, period="5d"):
     df = _get_recent_candle(symbol, period)
@@ -84,42 +91,4 @@ def scan_shooting_star(symbol, period="5d"):
         return False
     last = df.iloc[-1]
     body = abs(last["Close"] - last["Open"])
-    upper_wick = last["High"] - max(last["Close"], last["Open"])
-    lower_wick = min(last["Close"], last["Open"]) - last["Low"]
-    return upper_wick > 2 * body and lower_wick < body
-
-def scan_hanging_man(symbol, period="5d"):
-    df = _get_recent_candle(symbol, period)
-    if df is None:
-        return False
-    last = df.iloc[-1]
-    body = abs(last["Close"] - last["Open"])
-    lower_wick = min(last["Close"], last["Open"]) - last["Low"]
-
-def scan_spinning_top(symbol, period="5d"):
-    df = _get_recent_candle(symbol, period)
-    if df is None:
-        return False
-    last = df.iloc[-1]
-    body = abs(last["Close"] - last["Open"])
-    candle_range = last["High"] - last["Low"]
-
-    return body <= 0.3 * candle_range
-
-    upper_wick = last["High"] - max(last["Close"], last["Open"])
-
-    return lower_wick > 2 * body and upper_wick < body and last["Close"] < last["Open"]
-
-def scan_marubozu(df):
-    result = []
-    for _, row in df.iterrows():
-        body = abs(row['Close'] - row['Open'])
-        candle_range = row['High'] - row['Low']
-        upper_shadow = row['High'] - max(row['Open'], row['Close'])
-        lower_shadow = min(row['Open'], row['Close']) - row['Low']
-        
-        if upper_shadow <= 0.05 * candle_range and lower_shadow <= 0.05 * candle_range:
-            result.append(row['symbol'])
-    return result
-
-
+    upper_wick = last["High"] - max(last["Close"]()_
