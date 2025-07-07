@@ -1,15 +1,14 @@
 # app.py
 
 import streamlit as st
-from datetime import datetime
 from ui.layout import (
     render_header,
-    render_filters_icon,
-    render_highlights_section
+    render_top_controls,
+    render_highlights,
+    render_results
 )
-from ui.scan_card import render_scan_card
 
-# Sample scan result for now — this should come from actual scan logic
+# Sample static scan result – replace with real logic later
 sample_scan_results = [
     {
         "symbol": "RELIANCE.NS",
@@ -31,51 +30,37 @@ sample_scan_results = [
     }
 ]
 
-# ------------------ Streamlit Page Config ------------------
+# ----------------- Streamlit Config -----------------
 st.set_page_config(page_title="CandleScan India", layout="wide")
 
-# ------------------ UI Sections ------------------
+# ----------------- Header -----------------
 render_header()
-render_filters_icon()
 
-# Scan Controls Section
-st.markdown("### 🔍 Scan for Candlestick Patterns")
-st.markdown("*Choose your settings and scan across Indian markets.*")
+# ----------------- Controls -----------------
+duration, selected_pattern, show_filters, scan_now = render_top_controls()
 
-with st.container():
-    col1, col2, col3 = st.columns([1.2, 2.5, 1])
-    with col1:
-        chart_duration = st.selectbox("Chart Duration", ["15m", "30m", "1d", "1wk"], index=0)
-    with col2:
-        selected_pattern = st.selectbox("Candlestick Pattern", [
-            "Bullish Engulfing", "Bearish Engulfing", "Doji",
-            "Hammer", "Inverted Hammer", "Morning Star", "Evening Star"
-        ])
-    with col3:
-        st.markdown("<br>", unsafe_allow_html=True)
-        scan_now = st.button("🔎 Scan Now")
+# ----------------- Optional Filter Section -----------------
+if show_filters:
+    with st.expander("Filter Options", expanded=True):
+        st.warning("Coming soon: Sector, Volume, Price Range, etc.")
 
-# ------------------ Scan Results ------------------
+# ----------------- Scan Action -----------------
 if scan_now:
-    matched_stocks = sample_scan_results  # Replace with real scan logic
-    render_highlights_section(matched_stocks, selected_pattern)
+    # You would replace this with filtered results based on selection
+    matched_stocks = sample_scan_results
+    render_highlights(matched_stocks, selected_pattern)
 
+    # Show as table
     st.markdown("### 📋 Scan Results")
-
-    # Optional: Display as table
     st.dataframe(
         [{
-            "Stock Name": stock["name"],
-            "Symbol": stock["symbol"],
-            "LTP (₹)": stock["price"],
-            "Exchange": stock["exchange"],
-            "Time": stock["time"],
-            "Duration": stock["duration"],
-            "Pattern": stock["pattern"]
-        } for stock in matched_stocks],
+            "Stock Name": s["name"],
+            "Symbol": s["symbol"],
+            "LTP (₹)": s["price"],
+            "Exchange": s["exchange"],
+            "Time": s["time"],
+            "Duration": s["duration"],
+            "Pattern": s["pattern"]
+        } for s in matched_stocks],
         use_container_width=True
     )
-
-    # Optional: Render Card View too (uncomment if needed)
-    # for stock in matched_stocks:
-    #     render_scan_card(stock)
