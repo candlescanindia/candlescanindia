@@ -1,83 +1,48 @@
 import streamlit as st
-from utils import data_loader
-from scans import candlestick
 from datetime import datetime
+from scans import candlestick
+from utils import data_loader
+from ui.components import header_section, filter_section, pattern_selector, result_display, highlights_box
 
 # Load stock data
+st.set_page_config(page_title="CandleScan India", layout="wide")
 df_stocks = data_loader.load_stocks()
-stock_list = df_stocks["Symbol"].tolist()
 
-# Available chart durations
-interval_map = {
-    "15 minutes": "15m",
-    "Daily": "1d",
-    "Weekly": "1wk"
-}
+# 1. Header
+header_section()
 
-# Optional filters (for now placeholder)
-market_caps = ["All", "Large Cap", "Mid Cap", "Small Cap"]
+# 2. Duration and Filter section
+col1, col2 = st.columns([2, 1])
+with col1:
+    selected_duration = st.selectbox(
+        "Select Chart Duration",
+        options=["15 min", "30 min", "1 day", "1 week"],
+        index=2,
+        format_func=lambda x: x.title(),
+        key="chart_duration"
+    )
+with col2:
+    filter_section()
 
-# Available patterns
-pattern_functions = {
-    "Hammer": candlestick.scan_hammer,
-    "Inverted Hammer": candlestick.scan_inverted_hammer,
-    "Doji": candlestick.scan_doji,
-    "Bullish Engulfing": candlestick.scan_bullish_engulfing,
-    "Bearish Engulfing": candlestick.scan_bearish_engulfing,
-    "Morning Star": candlestick.scan_morning_star,
-    "Evening Star": candlestick.scan_evening_star,
-    "Shooting Star": candlestick.scan_shooting_star,
-    "Hanging Man": candlestick.scan_hanging_man,
-    "Spinning Top": candlestick.scan_spinning_top,
-    "Marubozu": candlestick.scan_marubozu
-}
+# 3. Pattern selection
+selected_pattern = pattern_selector()
 
-# ----- Streamlit Layout -----
-st.set_page_config(page_title="CandleScan India", layout="centered")
-st.markdown("## 📊 CandleScan India")
-st.markdown("Smart scanner for Indian stocks based on candlestick patterns")
+# 4. Scan button and result
+if st.button("🔍 Scan", use_container_width=True):
+    matching_stocks = []
+    current_time = datetime.now().strftime("%d-%b-%Y %I:%M %p")
 
-# --- Top Two Columns ---
-top_col1, top_col2 = st.columns([1, 1])
+    with st.spinner("Scanning stocks..."):
+        for symbol in df_stocks["symbol"]:
+            try:
+                scan_func = getattr(candlestick, f"scan_{selected_pattern.lower().replace(' ', '_')}")
+                if scan_func(symbol):
+                    matching_stocks.append(symbol)
+            except Exception as e:
+                st.warning(f"Error scanning {symbol}: {e}")
 
-with top_col1:
-    selected_interval = st.selectbox("🕒 Select Chart Duration", list(interval_map.keys()), key="interval")
-
-with top_col2:
-    selected_market_cap = st.selectbox("🏢 Filter by Market Cap", market_caps, key="marketcap")
-
-# --- Pattern Selection and Button ---
-st.markdown("### 🔎 Scan for Candlestick Pattern")
-selected_pattern = st.selectbox(
-    "Select Pattern",
-    list(pattern_functions.keys()),
-    index=0,
-    key="pattern"
-)
-
-scan_btn = st.button("🚀 Start Scan")
-
-# --- Scan Logic ---
-if scan_btn:
-    interval = interval_map[selected_interval]
-    pattern_fn = pattern_functions[selected_pattern]
-
-    st.info(f"🔄 Scanning {len(stock_list)} stocks on **{selected_interval}** interval for **{selected_pattern}**...")
-
-    matched = []
-    for symbol in stock_list:
-        try:
-            if pattern_fn(symbol, period="5d", interval=interval):
-                matched.append((symbol, datetime.now().strftime("%Y-%m-%d %H:%M")))
-        except Exception as e:
-            st.warning(f"{symbol}: {e}")
-
-    # --- Display Result Box ---
-    st.markdown("---")
-    if matched:
-        count = len(matched)
-        with st.expander(f"✅ {count} stocks formed {selected_pattern} today (Click to expand)", expanded=True):
-            for sym, dt in matched:
-                st.markdown(f"- **{sym}** — _Detected on {dt}_")
-    else:
-        st.error("❌ No stocks found matching the selected pattern.")
+    result_display(selected_pattern, matching_stocks, current_time)
+    highlights_box(selected_pattern, matching_stocks)
+else:
+    st.markdown("<br>", unsafe_allow_html=True)
+    highlights_box(None, [])
