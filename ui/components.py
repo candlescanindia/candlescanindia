@@ -1,6 +1,5 @@
 import streamlit as st
 from datetime import datetime
-from st_pages import add_indented_title
 
 def header_section():
     st.markdown(
