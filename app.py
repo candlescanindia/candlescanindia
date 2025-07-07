@@ -1,6 +1,13 @@
 import streamlit as st
+import os
+import sys
+
+# Add current directory to path for imports
+sys.path.append(os.path.dirname(__file__))
+
 from utils import data_loader
 from scans import candlestick
+
 from components.layout import (
     header_section,
     filter_section,
@@ -12,21 +19,17 @@ from components.scan_card import (
     highlights_box
 )
 
-# Set page config
-st.set_page_config(page_title="CandleScan India", layout="wide")
-
-# Header section
-header_section()
-
 # Load stock list
 df_stocks = data_loader.load_stocks()
-if "Symbol" not in df_stocks.columns:
-    st.error("The 'Symbol' column is missing from the stock list CSV.")
-    st.stop()
 
-stock_list = df_stocks["Symbol"].dropna().unique().tolist()
+# Ensure correct column name
+stock_list = df_stocks["Symbol"].tolist() if "Symbol" in df_stocks.columns else df_stocks.columns[0].tolist()
 
-# --- Top Filters ---
+# --- Page Config ---
+st.set_page_config(page_title="CandleScan India", layout="wide")
+header_section()
+
+# --- Top Layout with Duration & Filter ---
 col1, col2 = st.columns([2, 1])
 with col1:
     duration = st.selectbox("Select Chart Duration", ["15m", "30m", "1d", "1wk"], index=2)
@@ -36,7 +39,7 @@ with col2:
 # --- Pattern Selection ---
 selected_pattern = pattern_selector()
 
-# --- Search Field ---
+# --- Stock Search ---
 search_stock = st.text_input("🔍 Search stock symbol", placeholder="Type stock symbol (e.g. RELIANCE)", label_visibility="collapsed")
 
 # --- Scan Button ---
@@ -49,13 +52,12 @@ if st.button("🔎 Scan Now"):
             if search_stock and search_stock.lower() not in symbol.lower():
                 continue
             try:
-                matched = pattern_function(symbol, period="5d")  # Replace with dynamic period if required
+                matched = pattern_function(symbol, period="5d")  # you can map duration to period later
                 if matched:
                     matched_stocks.append(symbol)
             except Exception as e:
-                print(f"Error scanning {symbol}: {e}")
+                print(f"Error with {symbol}: {e}")
 
-        # Display Results
         result_display(matched_stocks, selected_pattern)
         highlights_box(matched_stocks, selected_pattern)
     else:
