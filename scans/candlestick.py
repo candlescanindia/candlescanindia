@@ -91,4 +91,36 @@ def scan_shooting_star(symbol, period="5d"):
         return False
     last = df.iloc[-1]
     body = abs(last["Close"] - last["Open"])
-    upper_wick = last["High"] - max(last["Close"]()_
+    upper_wick = last["High"] - max(last["Close"], last["Open"])
+    lower_wick = min(last["Close"], last["Open"]) - last["Low"]
+    return upper_wick > 2 * body and lower_wick < body
+
+def scan_hanging_man(symbol, period="5d"):
+    df = _get_recent_candle(symbol, period)
+    if df is None:
+        return False
+    last = df.iloc[-1]
+    body = abs(last["Close"] - last["Open"])
+    lower_wick = min(last["Close"], last["Open"]) - last["Low"]
+    upper_wick = last["High"] - max(last["Close"], last["Open"])
+    return lower_wick > 2 * body and upper_wick < body and last["Close"] < last["Open"]
+
+def scan_spinning_top(symbol, period="5d"):
+    df = _get_recent_candle(symbol, period)
+    if df is None:
+        return False
+    last = df.iloc[-1]
+    body = abs(last["Close"] - last["Open"])
+    candle_range = last["High"] - last["Low"]
+    return body <= 0.3 * candle_range
+
+def scan_marubozu(symbol, period="5d"):
+    df = _get_recent_candle(symbol, period)
+    if df is None:
+        return False
+    last = df.iloc[-1]
+    body = abs(last['Close'] - last['Open'])
+    candle_range = last['High'] - last['Low']
+    upper_shadow = last['High'] - max(last['Open'], last['Close'])
+    lower_shadow = min(last['Open'], last['Close']) - last['Low']
+    return upper_shadow <= 0.05 * candle_range and lower_shadow <= 0.05 * candle_range
