@@ -3,21 +3,20 @@
 import streamlit as st
 from datetime import datetime
 
-# ---------------- Mapping ----------------
+# Sample pattern mapping (replace with your actual mappings)
 PATTERN_MAP = {
     "Bullish Engulfing": "Bullish Reversal",
-    "Morning Star": "Bullish Reversal",
-    "Hammer": "Bullish Reversal",
     "Bearish Engulfing": "Bearish Reversal",
-    "Evening Star": "Bearish Reversal",
-    "Inverted Hammer": "Bearish Reversal",
-    "Doji": "Neutral"
+    "Doji": "Neutral",
+    "Hammer": "Bullish Reversal",
+    "Inverted Hammer": "Bullish Reversal",
+    "Morning Star": "Bullish Reversal",
+    "Evening Star": "Bearish Reversal"
 }
 
 REVERSE_PATTERN_MAP = {}
 for pattern, ptype in PATTERN_MAP.items():
     REVERSE_PATTERN_MAP.setdefault(ptype, []).append(pattern)
-
 
 # ---------------- Header ----------------
 def render_header():
@@ -43,7 +42,7 @@ def render_header():
 def render_top_controls():
     show_filters = False
 
-    # First Row: Title + Filter Icon
+    # Top: Heading + Filter icon
     top = st.columns([10, 1])
     with top[0]:
         st.markdown("#### 🔎 Market Scanner")
@@ -52,62 +51,77 @@ def render_top_controls():
         if st.button("🧰", help="Add Filters"):
             show_filters = True
 
-    # Sync State Initialization
+    # Initialize session state
     if "selected_pattern" not in st.session_state:
         st.session_state.selected_pattern = list(PATTERN_MAP.keys())[0]
     if "selected_type" not in st.session_state:
         st.session_state.selected_type = PATTERN_MAP[st.session_state.selected_pattern]
 
-    # Second Row: Duration, Pattern Type, Pattern, Scan Button
+    # Pattern change callback
+    def on_pattern_change():
+        st.session_state.selected_type = PATTERN_MAP[st.session_state.selected_pattern]
+
+    # Type change callback
+    def on_type_change():
+        filtered_patterns = REVERSE_PATTERN_MAP[st.session_state.selected_type]
+        if st.session_state.selected_pattern not in filtered_patterns:
+            st.session_state.selected_pattern = filtered_patterns[0]
+
+    # Controls row
     col1, col2, col3, col4 = st.columns([1.5, 2, 2.5, 1])
+
     with col1:
         st.markdown("**⏱️ Duration**")
         duration = st.selectbox("", ["15m", "30m", "1d", "1wk"], index=2, label_visibility="collapsed")
 
     with col2:
         st.markdown("**📂 Pattern Type**")
-        type_options = list(REVERSE_PATTERN_MAP.keys())
-        selected_type = st.selectbox(
-            "", type_options,
-            index=type_options.index(st.session_state.selected_type),
-            key="type_select", label_visibility="collapsed"
+        st.selectbox(
+            "",
+            list(REVERSE_PATTERN_MAP.keys()),
+            key="selected_type",
+            on_change=on_type_change,
+            label_visibility="collapsed"
         )
-        st.session_state.selected_type = selected_type
 
     with col3:
         st.markdown("**📊 Pattern**")
-        filtered_patterns = REVERSE_PATTERN_MAP[st.session_state.selected_type]
-        selected_pattern = st.selectbox(
+        st.selectbox(
             "",
-            options=filtered_patterns,
-            index=filtered_patterns.index(st.session_state.selected_pattern) if st.session_state.selected_pattern in filtered_patterns else 0,
-            key="pattern_select",
+            options=REVERSE_PATTERN_MAP[st.session_state.selected_type],
+            key="selected_pattern",
+            on_change=on_pattern_change,
             label_visibility="collapsed"
         )
-        st.session_state.selected_pattern = selected_pattern
-        st.session_state.selected_type = PATTERN_MAP[selected_pattern]
 
     with col4:
-        st.markdown("**&nbsp;**")  # spacing
+        st.markdown("**&nbsp;**")
         scan_clicked = st.button("🔎 Scan Now", use_container_width=True)
 
-    return duration, st.session_state.selected_type, st.session_state.selected_pattern, show_filters, scan_clicked
+    return (
+        duration,
+        st.session_state.selected_type,
+        st.session_state.selected_pattern,
+        show_filters,
+        scan_clicked
+    )
 
 
-# ---------------- Highlights ----------------
-def render_highlights(matched_stocks, selected_pattern, duration):
+# ---------------- Highlights Section ----------------
+def render_highlights(matched_stocks, selected_pattern):
     st.markdown("### 🟢 Highlights")
     if matched_stocks:
-        st.success(f"🕒 {len(matched_stocks)} stocks matched **{selected_pattern}** pattern on **{duration}** chart.")
-        st.markdown(f"⏰ As of {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        st.success(f"🕒 As of {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} — Pattern: **{selected_pattern}**")
+        st.markdown(f"**{len(matched_stocks)} stocks** formed this pattern today:")
+        st.write(", ".join(matched_stocks))
     else:
-        st.info("No matching stocks found.")
+        st.info("No stocks matched the selected candlestick pattern.")
 
 
 # ---------------- Results ----------------
-def render_results_table(df):
-    if not df.empty:
-        st.markdown("### 📋 Matched Stocks")
-        st.dataframe(df, use_container_width=True)
+def render_results_table(matched_stocks_info):
+    st.markdown("### 📋 Results Table")
+    if matched_stocks_info:
+        st.dataframe(matched_stocks_info, use_container_width=True)
     else:
-        st.warning("No matching results to display.")
+        st.warning("No results found for selected pattern.")
