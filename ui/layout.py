@@ -25,7 +25,9 @@ def render_header():
 
 # ---------------- Scan Controls (Top Row) ----------------
 def render_top_controls():
-    show_filters = False
+    # Manage filter state
+    if "show_filters" not in st.session_state:
+        st.session_state["show_filters"] = False
 
     # Top line: Heading + Filter icon
     top = st.columns([9, 1])
@@ -33,8 +35,39 @@ def render_top_controls():
         st.markdown("#### 🔎 Market Scanner")
         st.caption("Quickly scan Indian stocks for classic candlestick patterns")
     with top[1]:
-        if st.button("🧰", help="Add Filters"):
-            show_filters = True
+        filter_clicked = st.button("🧰", key="filter_icon", help="Show filters")
+
+        # Toggle visibility
+        if filter_clicked:
+            st.session_state["show_filters"] = not st.session_state["show_filters"]
+
+    # Inline filter popup simulation
+    if st.session_state["show_filters"]:
+        st.markdown("""
+        <style>
+            .floating-filter {
+                background-color: #f9f9f9;
+                border: 1px solid #ddd;
+                padding: 10px;
+                border-radius: 10px;
+                box-shadow: 0px 2px 10px rgba(0,0,0,0.1);
+                position: absolute;
+                right: 5rem;
+                top: 8rem;
+                z-index: 9999;
+                width: 250px;
+            }
+        </style>
+        <div class="floating-filter">
+        """, unsafe_allow_html=True)
+
+        with st.container():
+            st.checkbox("Only NSE Stocks", key="filt_nse")
+            st.checkbox("Price > ₹500", key="filt_price_500")
+            st.checkbox("High Volume", key="filt_vol")
+            st.checkbox("Large Cap", key="filt_cap")
+
+        st.markdown("</div>", unsafe_allow_html=True)
 
     # Second line: Duration + Pattern + Scan Now
     col1, col2, col3 = st.columns([1.5, 2.5, 1])
@@ -57,7 +90,7 @@ def render_top_controls():
         st.markdown("**&nbsp;**")  # For alignment
         scan_clicked = st.button("🔎 Scan Now", use_container_width=True)
 
-    return duration, pattern, show_filters, scan_clicked
+    return duration, pattern, st.session_state["show_filters"], scan_clicked
 
 
 # ---------------- Highlights Section ----------------
