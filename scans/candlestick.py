@@ -110,3 +110,16 @@ def scan_spinning_top(symbol, period="5d"):
 
     return lower_wick > 2 * body and upper_wick < body and last["Close"] < last["Open"]
 
+def scan_marubozu(df):
+    result = []
+    for _, row in df.iterrows():
+        body = abs(row['Close'] - row['Open'])
+        candle_range = row['High'] - row['Low']
+        upper_shadow = row['High'] - max(row['Open'], row['Close'])
+        lower_shadow = min(row['Open'], row['Close']) - row['Low']
+        
+        if upper_shadow <= 0.05 * candle_range and lower_shadow <= 0.05 * candle_range:
+            result.append(row['symbol'])
+    return result
+
+
