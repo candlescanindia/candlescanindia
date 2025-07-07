@@ -1,12 +1,13 @@
 import streamlit as st
 from utils import data_loader
 from scans import candlestick
-from ui.components.layout import (
+from components.layout import (
     header_section,
     filter_section,
     pattern_selector
 )
-from ui.components.scan_card import (
+
+from components.scan_card import (
     result_display,
     highlights_box
 )
