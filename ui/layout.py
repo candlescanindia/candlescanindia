@@ -2,6 +2,7 @@
 
 import streamlit as st
 
+# ---------------- Header ----------------
 def render_header():
     st.markdown("""
         <style>
@@ -19,3 +20,28 @@ def render_header():
         <div class="sub-title">Scan the entire Indian market for live candlestick patterns</div>
     """, unsafe_allow_html=True)
     st.markdown("---")
+
+
+# ---------------- Pattern Selector ----------------
+def render_pattern_selector():
+    patterns = [
+        "Bullish Engulfing",
+        "Bearish Engulfing",
+        "Doji",
+        "Hammer",
+        "Inverted Hammer",
+        "Morning Star",
+        "Evening Star"
+    ]
+    selected_pattern = st.selectbox("📊 Select Candlestick Pattern", patterns)
+    return selected_pattern
+
+
+# ---------------- Search Bar ----------------
+def render_search_bar():
+    search_query = st.text_input(
+        "🔍 Search stock symbol",
+        placeholder="Type stock symbol (e.g. RELIANCE)",
+        label_visibility="collapsed"
+    )
+    return search_query
