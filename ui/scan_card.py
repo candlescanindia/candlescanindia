@@ -1,28 +1,32 @@
+# ui/scan_card.py
+
 import streamlit as st
-from datetime import datetime
 
-def result_display(matched_stocks, selected_pattern):
-    st.markdown("## 📋 Scan Results")
+def render_scan_card(stock):
+    """
+    Displays a stock scan result in a card-style layout.
 
-    if not matched_stocks:
-        st.warning("No stocks matched the selected candlestick pattern.")
-        return
-
-    for symbol in matched_stocks:
-        with st.container():
-            st.markdown(f"""
-                <div style="
-                    border: 1px solid #e0e0e0;
-                    padding: 1rem;
-                    border-radius: 10px;
-                    background-color: #f9f9f9;
-                    margin-bottom: 1rem;
-                    box-shadow: 1px 1px 5px rgba(0,0,0,0.05);
-                ">
-                    <h4 style="margin: 0;">{symbol}</h4>
-                    <p style="margin: 0; color: #555;">
-                        📌 Pattern: <strong>{selected_pattern}</strong><br/>
-                        🕒 Detected: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-                    </p>
-                </div>
-            """, unsafe_allow_html=True)
+    :param stock: Dictionary with keys:
+        - symbol (str)
+        - name (str)
+        - pattern (str)
+        - price (float)
+        - exchange (str)
+        - time (str)
+        - duration (str)
+    """
+    st.markdown(
+        f"""
+        <div style="border: 1px solid #e0e0e0; border-radius: 12px; padding: 16px; margin-bottom: 12px; background-color: #f9f9f9;">
+            <div style="font-size: 1.1rem; font-weight: 600; color: #1a237e;">{stock['symbol']} <span style="color: #555;">({stock['name']})</span></div>
+            <div style="margin-top: 6px;">
+                <strong>📊 Pattern:</strong> {stock['pattern']} <br>
+                <strong>⏱ Duration:</strong> {stock['duration']} &nbsp;&nbsp; 
+                <strong>🕒 Time:</strong> {stock['time']} <br>
+                <strong>💰 LTP:</strong> ₹{stock['price']} &nbsp;&nbsp; 
+                <strong>🏦 Exchange:</strong> {stock['exchange']}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
