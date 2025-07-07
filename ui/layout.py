@@ -2,7 +2,6 @@
 
 import streamlit as st
 from datetime import datetime
-from streamlit_extras.stylable_container import stylable_container
 
 # ---------------- Header ----------------
 def render_header():
@@ -24,36 +23,40 @@ def render_header():
     st.markdown("---")
 
 
-# ---------------- Top Controls ----------------
+# ---------------- Scan Controls (Top Row) ----------------
 def render_top_controls():
     show_filters = False
-    with st.container():
-        # Filter Icon
-        col_icon, col_space = st.columns([0.1, 0.9])
-        with col_icon:
-            if st.button("⚙️", help="Add Filters"):
-                show_filters = True
 
-        # Main scan controls in a row
-        col1, col2, col3 = st.columns([1.5, 2, 1])
-        with col1:
-            duration = st.selectbox("Duration", ["15m", "30m", "1d", "1wk"], index=2, label_visibility="collapsed")
-        with col2:
-            pattern = st.selectbox("Candlestick Pattern", [
+    # Top-right Filter Icon
+    filter_col = st.columns([10, 1])
+    with filter_col[1]:
+        if st.button("🧰", help="Add Filters"):
+            show_filters = True
+
+    # Scan Line: Duration + Pattern + Scan Button
+    col1, col2, col3 = st.columns([1.2, 2.2, 1])
+    with col1:
+        duration = st.selectbox("⏱️", ["15m", "30m", "1d", "1wk"], index=2, label_visibility="collapsed")
+    with col2:
+        pattern = st.selectbox(
+            "📊",
+            [
                 "Bullish Engulfing", "Bearish Engulfing", "Doji", "Hammer",
                 "Inverted Hammer", "Morning Star", "Evening Star"
-            ], label_visibility="collapsed")
-        with col3:
-            st.markdown("###")  # Push button down slightly
-            scan_clicked = st.button("🔎 Scan Now", use_container_width=True)
+            ],
+            label_visibility="collapsed"
+        )
+    with col3:
+        st.markdown("<div style='padding-top: 10px'></div>", unsafe_allow_html=True)
+        scan_clicked = st.button("🔎 Scan Now", use_container_width=True)
 
     return duration, pattern, show_filters, scan_clicked
 
 
-# ---------------- Optional Filters Section ----------------
+# ---------------- Optional Filters ----------------
 def render_filters():
-    with st.expander("🧰 Advanced Filters"):
-        st.info("Filter options coming soon (e.g. market cap, price, volume, sector, etc.)")
+    with st.expander("⚙️ Advanced Filters"):
+        st.info("Filter options coming soon (e.g. price, volume, sector, etc.)")
 
 
 # ---------------- Section Heading ----------------
