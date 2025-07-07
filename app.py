@@ -1,32 +1,34 @@
 import streamlit as st
 from utils import data_loader
 from scans import candlestick
-from ui.components import (
+from ui.components.layout import (
     header_section,
     filter_section,
-    pattern_selector,
+    pattern_selector
+)
+from ui.components.scan_card import (
     result_display,
     highlights_box
 )
 
-# Load stock list safely with lowercase normalization
-df_stocks = data_loader.load_stocks()
-df_stocks.columns = df_stocks.columns.str.strip().str.lower()  # normalize headers
-stock_list = df_stocks["symbol"].unique().tolist()  # remove duplicates
-
-# --- Layout Start ---
+# Set page config
 st.set_page_config(page_title="CandleScan India", layout="wide")
+
+# Header section
 header_section()
 
-# --- Top Section: Duration & Filters ---
+# Load stock list
+df_stocks = data_loader.load_stocks()
+if "Symbol" not in df_stocks.columns:
+    st.error("The 'Symbol' column is missing from the stock list CSV.")
+    st.stop()
+
+stock_list = df_stocks["Symbol"].dropna().unique().tolist()
+
+# --- Top Filters ---
 col1, col2 = st.columns([2, 1])
 with col1:
-    duration = st.selectbox(
-        "Select Chart Duration",
-        ["15m", "30m", "1d", "1wk"],
-        index=2,
-        help="Choose the time frame for candlestick scanning."
-    )
+    duration = st.selectbox("Select Chart Duration", ["15m", "30m", "1d", "1wk"], index=2)
 with col2:
     show_filters = filter_section()
 
@@ -34,11 +36,7 @@ with col2:
 selected_pattern = pattern_selector()
 
 # --- Search Field ---
-search_stock = st.text_input(
-    "🔍 Search stock symbol",
-    placeholder="Type stock symbol (e.g. RELIANCE)",
-    label_visibility="collapsed"
-)
+search_stock = st.text_input("🔍 Search stock symbol", placeholder="Type stock symbol (e.g. RELIANCE)", label_visibility="collapsed")
 
 # --- Scan Button ---
 if st.button("🔎 Scan Now"):
@@ -50,14 +48,14 @@ if st.button("🔎 Scan Now"):
             if search_stock and search_stock.lower() not in symbol.lower():
                 continue
             try:
-                matched = pattern_function(symbol, period="5d")  # can be mapped from `duration`
+                matched = pattern_function(symbol, period="5d")  # Replace with dynamic period if required
                 if matched:
                     matched_stocks.append(symbol)
             except Exception as e:
-                st.warning(f"Error while scanning {symbol}: {e}")
+                print(f"Error scanning {symbol}: {e}")
 
-        # --- Results Display ---
+        # Display Results
         result_display(matched_stocks, selected_pattern)
         highlights_box(matched_stocks, selected_pattern)
     else:
-        st.error("Selected pattern is not implemented yet.")
+        st.error("Selected pattern is not available yet.")
