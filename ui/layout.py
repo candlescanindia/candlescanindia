@@ -69,7 +69,7 @@ def render_top_controls():
         st.markdown("**🧭 Pattern Type**")
         pattern_type_input = st.selectbox(
             "", ["Show All"] + list(pattern_type_map.keys()),
-            index=(["Show All"] + list(pattern_type_map.keys())).index(st.session_state.pattern_type),
+            index=( ["Show All"] + list(pattern_type_map.keys()) ).index(st.session_state.pattern_type),
             key="pattern_type_input", label_visibility="collapsed"
         )
         st.session_state.pattern_type = pattern_type_input
@@ -82,10 +82,9 @@ def render_top_controls():
         )
 
         pattern = st.selectbox(
-            "", options=[""] + sorted(available_patterns), key="pattern_dropdown", label_visibility="collapsed"
+            "", options=sorted(available_patterns), key="pattern_dropdown", label_visibility="collapsed"
         )
 
-        # When pattern selected manually, update type
         if pattern and pattern != st.session_state.pattern_selected:
             st.session_state.pattern_selected = pattern
             st.session_state.pattern_type = pattern_to_type.get(pattern, "Show All")
@@ -106,16 +105,3 @@ def render_highlights(matched_stocks, selected_pattern):
         st.write(", ".join(matched_stocks))
     else:
         st.info("No stocks matched the selected candlestick pattern.")
-
-
-# ---------------- Results Table ----------------
-def render_results_table(data):
-    st.markdown("### 📋 Matched Stocks")
-    if data is not None and not data.empty:
-        st.dataframe(
-            data[["Stock Name", "Symbol", "LTP", "Exchange", "Pattern Formed On", "Pattern Duration"]],
-            use_container_width=True,
-            hide_index=True
-        )
-    else:
-        st.warning("No matching stocks found.")
