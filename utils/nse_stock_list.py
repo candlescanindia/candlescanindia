@@ -3,7 +3,7 @@
 import pandas as pd
 import os
 
-def fetch_nse_stock_list(csv_path="/mnt/data/EQUITY_L.csv"):
+def fetch_nse_stock_list(csv_path="data/EQUITY_L.csv"):
     """
     Load stock list from the local NSE CSV file.
     Returns: List of dicts with 'symbol' and 'name'.
