@@ -1,27 +1,13 @@
 import yfinance as yf
 import pandas as pd
-import talib
 
-# Mapping user-friendly names to TA-Lib functions
-PATTERN_FUNCTIONS = {
-    "Bullish Engulfing": talib.CDLENGULFING,
-    "Hammer": talib.CDLHAMMER,
-    "Inverted Hammer": talib.CDLINVERTEDHAMMER,
-    "Morning Star": talib.CDLMORNINGSTAR,
-    "Bearish Engulfing": talib.CDLENGULFING,
-    "Evening Star": talib.CDLEVENINGSTAR,
-    "Hanging Man": talib.CDLHANGINGMAN,
-    "Shooting Star": talib.CDLSHOOTINGSTAR,
-    "Doji": talib.CDLDOJI,
-    "Spinning Top": talib.CDLSPINNINGTOP,
-}
-
-# Sample list of NSE stock tickers for testing — ideally replace with full list
+# Sample NSE stock tickers — you can replace this with a full list later
 NSE_TICKERS = [
     "RELIANCE.NS", "TCS.NS", "INFY.NS", "HDFCBANK.NS", "ICICIBANK.NS",
     "ITC.NS", "LT.NS", "SBIN.NS", "AXISBANK.NS", "KOTAKBANK.NS"
 ]
 
+# Fetch data using yfinance
 def fetch_stock_data(ticker, duration):
     interval_map = {
         "15m": "15m",
@@ -37,17 +23,67 @@ def fetch_stock_data(ticker, duration):
     }
 
     try:
-        data = yf.download(
+        df = yf.download(
             tickers=ticker,
             interval=interval_map[duration],
             period=period_map[duration],
             progress=False
         )
-        return data if not data.empty else None
+        return df if not df.empty else None
     except Exception as e:
         print(f"Error fetching data for {ticker}: {e}")
         return None
 
+# --- Pattern detection functions (TA-Lib Free) ---
+
+def is_bullish_engulfing(df):
+    prev = df.iloc[-2]
+    last = df.iloc[-1]
+    return (
+        prev['Close'] < prev['Open'] and
+        last['Close'] > last['Open'] and
+        last['Open'] < prev['Close'] and
+        last['Close'] > prev['Open']
+    )
+
+def is_bearish_engulfing(df):
+    prev = df.iloc[-2]
+    last = df.iloc[-1]
+    return (
+        prev['Close'] > prev['Open'] and
+        last['Close'] < last['Open'] and
+        last['Open'] > prev['Close'] and
+        last['Close'] < prev['Open']
+    )
+
+def is_hammer(df):
+    last = df.iloc[-1]
+    body = abs(last['Close'] - last['Open'])
+    lower_shadow = min(last['Open'], last['Close']) - last['Low']
+    upper_shadow = last['High'] - max(last['Open'], last['Close'])
+    return (
+        lower_shadow > 2 * body and
+        upper_shadow < body
+    )
+
+def is_doji(df):
+    last = df.iloc[-1]
+    body = abs(last['Close'] - last['Open'])
+    range_ = last['High'] - last['Low']
+    return body < 0.1 * range_
+
+# Add more patterns here...
+
+# Mapping pattern names to detection functions
+PATTERN_FUNCTIONS = {
+    "Bullish Engulfing": is_bullish_engulfing,
+    "Bearish Engulfing": is_bearish_engulfing,
+    "Hammer": is_hammer,
+    "Doji": is_doji,
+    # Add more patterns as needed
+}
+
+# --- Main scan runner ---
 def run_candlestick_scan(duration, pattern):
     results = []
 
@@ -58,15 +94,17 @@ def run_candlestick_scan(duration, pattern):
 
     for ticker in NSE_TICKERS:
         df = fetch_stock_data(ticker, duration)
-        if df is None or len(df) < 10:
+        if df is None or len(df) < 3:
             continue
 
-        signal = pattern_func(df['Open'], df['High'], df['Low'], df['Close'])
-
-        if signal.iloc[-1] != 0:  # last candle formed the pattern
-            results.append({
-                "name": ticker.replace(".NS", "").upper(),
-                "code": ticker
-            })
+        try:
+            if pattern_func(df):
+                results.append({
+                    "name": ticker.replace(".NS", ""),
+                    "code": ticker
+                })
+        except Exception as e:
+            print(f"Error checking {pattern} for {ticker}: {e}")
+            continue
 
     return results
