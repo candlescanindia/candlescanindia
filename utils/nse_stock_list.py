@@ -1,38 +1,31 @@
 # utils/nse_stock_list.py
 
-import requests
 import pandas as pd
+import requests
+from io import StringIO
 
 def fetch_nse_stock_list():
-    url = "https://www.nseindia.com/api/equity-stockIndices?index=NIFTY%20500"
-
+    url = "https://www1.nseindia.com/content/equities/EQUITY_L.csv"
     headers = {
         "User-Agent": "Mozilla/5.0",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Referer": "https://www.nseindia.com/",
+        "Referer": "https://www.nseindia.com/market-data/securities-available-for-trading"
     }
 
     try:
+        # Setup session to fetch NSE cookies
         session = requests.Session()
         session.headers.update(headers)
-        session.get("https://www.nseindia.com", timeout=5)  # Set cookies
+        session.get("https://www.nseindia.com")  # needed to set cookies
 
         response = session.get(url, timeout=10)
-        response.raise_for_status()
+        response.raise_for_status()  # raise if failed
 
-        data = response.json()
-        stocks = data["data"]
+        df = pd.read_csv(StringIO(response.text))
+        df = df[["SYMBOL", "NAME OF COMPANY"]].dropna()
+        df.columns = ["symbol", "name"]
 
-        stock_list = []
-        for stock in stocks:
-            symbol = stock.get("symbol")
-            company = stock.get("meta", {}).get("companyName", symbol)
-            if symbol:
-                stock_list.append({"code": symbol, "name": company})
-
-        return stock_list
+        return df.to_dict(orient="records")
 
     except Exception as e:
-        print(f"[ERROR] Failed to fetch stock list: {e}")
+        print("❌ Failed to fetch NSE stock list:", e)
         return []
