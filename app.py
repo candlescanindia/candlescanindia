@@ -2,7 +2,7 @@ import streamlit as st
 from ui.layout import render_header, render_top_controls
 from scans.candlestick import run_candlestick_scan
 from ui.scan_card import render_scan_results
-from ui.insight_box import show_insight_box
+from ui.insight_box import render_insight_box
 
 def main():
     st.set_page_config(page_title="CandleScan India", layout="wide")
@@ -13,8 +13,13 @@ def main():
     # Top controls
     duration, pattern_type, pattern_selected, show_filters, scan_clicked = render_top_controls()
 
-    # General rotating insights
-    show_insight_box()
+    # General insights (can be static or updated periodically)
+    static_insights = [
+        "Hammer appeared 15 times today in NIFTY 500 stocks.",
+        "Bearish Engulfing detected in large-cap pharma sector.",
+        "Doji patterns increased in last 3 sessions."
+    ]
+    render_insight_box(static_insights)
 
     # Run scan only when button is clicked
     results = []
@@ -27,7 +32,7 @@ def main():
                 filters_enabled=show_filters
             )
 
-    # Show scan results (even if empty, logic is inside render_scan_results)
+    # Show results
     render_scan_results(results, scan_clicked)
 
 if __name__ == "__main__":
