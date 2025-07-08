@@ -1,33 +1,25 @@
-# app.py
-
 import streamlit as st
 from ui.layout import render_header, render_top_controls
 from ui.scan_card import render_scan_results
-from scans.candlestick import run_candlestick_scan
+from scans.candlestick import run_candlestick_scan  # Backend scanning logic
 
 def main():
     st.set_page_config(page_title="CandleScan India", layout="wide")
 
+    # Header
     render_header()
 
-    try:
-        duration, pattern_type, pattern, _, scan_clicked = render_top_controls()
-    except Exception as e:
-        st.error(f"Error in top controls: {e}")
-        return
+    # Controls
+    duration, pattern_type, pattern_selected, show_filters, scan_clicked = render_top_controls()
 
+    # Run scan if scan button clicked
     matched_results = []
-    try:
-        if scan_clicked:
-            matched_results = run_candlestick_scan(duration, pattern)
-    except Exception as e:
-        st.error(f"Error during scanning: {e}")
-        return
+    if scan_clicked and pattern_selected:
+        matched_results = run_candlestick_scan(duration=duration, pattern=pattern_selected)
 
-    try:
-        render_scan_results(matched_results)
-    except Exception as e:
-        st.error(f"Error while rendering results: {e}")
+    # Scan result section (always visible)
+    render_scan_results(matched_results, scan_clicked)
+
 
 if __name__ == "__main__":
     main()
