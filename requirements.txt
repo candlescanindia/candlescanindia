@@ -1,5 +1,7 @@
-# requirements.txt
-streamlit-extras
-yfinance
-talib
-pip
+streamlit>=1.30.0
+yfinance>=0.2.36
+pandas>=2.2.2
+numpy>=1.26.4
+matplotlib>=3.8.4
+ta-lib==0.4.0 ; platform_system != 'Windows'
+python-dateutil>=2.9.0
