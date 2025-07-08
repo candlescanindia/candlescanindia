@@ -17,9 +17,7 @@ def render_scan_result(stock: dict, pattern: str, duration: str):
     rsi = stock.get("rsi", None)
     timestamp = stock.get("timestamp", None)
 
-    dt_str = (
-        datetime.strftime(timestamp, "%d %b %Y, %I:%M %p") if timestamp else "N/A"
-    )
+    dt_str = datetime.strftime(timestamp, "%d %b %Y, %I:%M %p") if timestamp else "N/A"
     price_str = f"₹{price:.2f}" if price else "N/A"
     rsi_str = f"{rsi:.1f}" if rsi else "N/A"
 
@@ -32,5 +30,18 @@ def render_scan_result(stock: dict, pattern: str, duration: str):
                 margin-bottom: 1.25rem;
                 background: #f8f9fa;
                 box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-                ">
-                <div style="font-size: 1.2rem; font-weight: 600; color: #1f4e79;">📌 {name}</div>
+            ">
+                <div style="font-size: 1.2rem; font-weight: 600; color: #1f4e79;">
+                    📌 {name} ({code})
+                </div>
+                <div style="margin-top: 0.5rem;">
+                    <b>Pattern:</b> {pattern} <br/>
+                    <b>Timeframe:</b> {duration} <br/>
+                    <b>Detected on:</b> {dt_str} <br/>
+                    <b>Last Traded Price:</b> {price_str} <br/>
+                    <b>RSI:</b> {rsi_str}
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
