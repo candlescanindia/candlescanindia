@@ -30,16 +30,22 @@ def perform_scan(duration, pattern):
 
 def main():
     st.set_page_config(page_title="CandleScan India", layout="wide")
-    
+
     render_header()
 
     duration, pattern_type, pattern, show_filters, scan_clicked = render_top_controls()
 
-    matched_results = []
-    if scan_clicked and pattern:
-        matched_results = perform_scan(duration, pattern)
-
-    render_scan_results(matched_results)
+    if scan_clicked:
+        if pattern:
+            matched_results = perform_scan(duration, pattern)
+            if matched_results:
+                render_scan_results(matched_results)
+            else:
+                st.warning("⚠️ No matching stock found for the selected pattern.")
+        else:
+            st.info("ℹ️ Please select a candlestick pattern to start scanning.")
+    else:
+        st.info("🔍 Use the filters above and click **Scan Now** to find matching stocks.")
 
 if __name__ == "__main__":
     main()
