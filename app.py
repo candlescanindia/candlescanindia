@@ -12,19 +12,21 @@ def main():
 
     render_header()
 
+    # Top control section
     duration, pattern_type, pattern, _, scan_clicked = render_top_controls()
 
+    # Run scan logic on button click
     matched_results = []
     if scan_clicked and pattern:
         matched_results = run_candlestick_scan(duration=duration, pattern=pattern)
 
-    # Scan result display (always visible)
+    # Always-visible scan results section
     st.markdown("## 🧾 Scan Results")
     render_scan_results(matched_results, scan_clicked)
 
-    # Insights box (always visible, independent of scan)
+    # Always-visible insight box with no logic (placeholder)
     st.markdown("## 💡 Live Insights")
-    render_insight_box()
+    render_insight_box([])  # empty list for now
 
 
 if __name__ == "__main__":
