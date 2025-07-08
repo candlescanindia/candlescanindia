@@ -1,28 +1,25 @@
-import requests
+# utils/nse_stock_list.py
+
+from nsetools import Nse
 import pandas as pd
 
 def fetch_nse_stock_list():
     """
-    Fetches a basic list of NSE stocks (symbol and name) from NSE's equity stock list.
-    Returns: list of dicts: [{"code": "RELIANCE", "name": "Reliance Industries"}, ...]
+    Fetches all NSE stock codes using nsetools.
+
+    Returns:
+        List[dict]: Each dict contains 'name' and 'code' of a stock.
     """
-    url = "https://www1.nseindia.com/content/equities/EQUITY_L.csv"
-
+    nse = Nse()
     try:
-        headers = {
-            "User-Agent": "Mozilla/5.0",
-            "Referer": "https://www.nseindia.com"
-        }
-
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
-
-        df = pd.read_csv(pd.compat.StringIO(response.text))
-        df = df[["SYMBOL", "NAME OF COMPANY"]]
-
-        stock_list = df.rename(columns={"SYMBOL": "code", "NAME OF COMPANY": "name"}).to_dict("records")
+        all_stock_codes = nse.get_stock_codes()
+        # Remove the first item, which is a header ("SYMBOL": "Company Name")
+        stock_list = [
+            {"code": symbol, "name": name}
+            for symbol, name in all_stock_codes.items()
+            if symbol != "SYMBOL"
+        ]
         return stock_list
-
     except Exception as e:
-        print("Error fetching NSE stock list:", e)
+        print(f"[ERROR] Failed to fetch stock list: {e}")
         return []
