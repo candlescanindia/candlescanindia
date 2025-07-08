@@ -1,38 +1,39 @@
 import yfinance as yf
 import pandas as pd
+import streamlit as st
+from nsetools import Nse
 
-# Sample NSE stock tickers 
-NSE_TICKERS = [
-    "RELIANCE.NS", "TCS.NS", "INFY.NS", "HDFCBANK.NS", "ICICIBANK.NS",
-    "ITC.NS", "LT.NS", "SBIN.NS", "AXISBANK.NS", "KOTAKBANK.NS"
-]
+# --- Load NSE stock list dynamically ---
+st.write("Loading NSE stock symbols...")  # optional console log
 
+@st.cache_data(ttl=86400)
+def load_nse_symbols():
+    nse = Nse()
+    codes = nse.get_stock_codes()  # returns list of tickers
+    # First item is usually header; skip it
+    return [code for code in codes if code and code.isalpha()]
+
+NSE_TICKERS = load_nse_symbols()
+
+# --- Cached fetch ---
+@st.cache_data(ttl=3600)
 def fetch_stock_data(ticker, duration):
-    interval_map = {
-        "15m": "15m",
-        "30m": "30m",
-        "1d": "1d",
-        "1wk": "1wk"
-    }
-    period_map = {
-        "15m": "1d",
-        "30m": "2d",
-        "1d": "30d",
-        "1wk": "3mo"
-    }
-
+    interval_map = {"15m":"15m","30m":"30m","1d":"1d","1wk":"1wk"}
+    period_map = {"15m":"1d","30m":"2d","1d":"60d","1wk":"1y"}
     try:
-        df = yf.download(
-            tickers=ticker,
-            interval=interval_map[duration],
-            period=period_map[duration],
-            progress=False
-        )
+        df = yf.download(tickers=f"{ticker}.NS", interval=interval_map[duration],
+                         period=period_map[duration], progress=False)
         return df if not df.empty else None
-    except Exception as e:
-        print(f"Error fetching data for {ticker}: {e}")
+    except:
         return None
 
+def compute_rsi(series, period=14):
+    delta = series.diff()
+    gain = delta.where(delta > 0, 0).rolling(period).mean()
+    loss = -delta.where(delta < 0, 0).rolling(period).mean()
+    rs = gain / loss
+    return 100 - (100 / (1 + rs)).iloc[-1]
+    
 # ---------------- Pattern Functions ----------------
 def is_bullish_engulfing(df):
     prev, last = df.iloc[-2], df.iloc[-1]
@@ -184,28 +185,40 @@ PATTERN_FUNCTIONS = {
     "Tweezer Bottom": is_tweezer_bottom,
 }
 
-# ---------------- Scanner Core ----------------
-def run_candlestick_scan(duration, pattern):
+
+# --- Main scan function with filters ---
+def run_candlestick_scan(
+    duration, pattern,
+    min_volume=0, min_price=None, max_price=None,
+    min_rsi=None, max_rsi=None
+):
     results = []
-
-    if pattern not in PATTERN_FUNCTIONS:
+    func = PATTERN_FUNCTIONS.get(pattern)
+    if not func:
         return results
-
-    pattern_func = PATTERN_FUNCTIONS[pattern]
 
     for ticker in NSE_TICKERS:
         df = fetch_stock_data(ticker, duration)
         if df is None or len(df) < 3:
             continue
-
+        last = df.iloc[-1]
+        # Volume filter
+        if min_volume and last["Volume"] < min_volume:
+            continue
+        # Price filters
+        price = last["Close"]
+        if (min_price and price < min_price) or (max_price and price > max_price):
+            continue
+        # RSI filter
+        if min_rsi or max_rsi:
+            rsi = compute_rsi(df["Close"])
+            if (min_rsi and rsi < min_rsi) or (max_rsi and rsi > max_rsi):
+                continue
+        # Pattern check
         try:
-            if pattern_func(df):
-                results.append({
-                    "name": ticker.replace(".NS", ""),
-                    "code": ticker
-                })
-        except Exception as e:
-            print(f"Error checking {pattern} for {ticker}: {e}")
+            if func(df):
+                results.append({"name": ticker, "code": f"{ticker}.NS"})
+        except:
             continue
 
     return results
