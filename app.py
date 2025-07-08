@@ -9,13 +9,25 @@ def main():
     st.set_page_config(page_title="CandleScan India", layout="wide")
 
     render_header()
-    duration, pattern_type, pattern, show_filters, scan_clicked = render_top_controls()
+
+    try:
+        duration, pattern_type, pattern, _, scan_clicked = render_top_controls()
+    except Exception as e:
+        st.error(f"Error in top controls: {e}")
+        return
 
     matched_results = []
-    if scan_clicked:
-        matched_results = run_candlestick_scan(duration, pattern)
+    try:
+        if scan_clicked:
+            matched_results = run_candlestick_scan(duration, pattern)
+    except Exception as e:
+        st.error(f"Error during scanning: {e}")
+        return
 
-    render_scan_results(matched_results)
+    try:
+        render_scan_results(matched_results)
+    except Exception as e:
+        st.error(f"Error while rendering results: {e}")
 
 if __name__ == "__main__":
     main()
