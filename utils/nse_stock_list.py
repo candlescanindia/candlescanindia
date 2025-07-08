@@ -1,17 +1,28 @@
-from requests_html import HTMLSession
+import requests
+import pandas as pd
 
 def fetch_nse_stock_list():
-    session = HTMLSession()
-    url = "https://www.nseindia.com/api/equity-stockIndices?index=NIFTY%20500"
+    """
+    Fetches a basic list of NSE stocks (symbol and name) from NSE's equity stock list.
+    Returns: list of dicts: [{"code": "RELIANCE", "name": "Reliance Industries"}, ...]
+    """
+    url = "https://www1.nseindia.com/content/equities/EQUITY_L.csv"
 
     try:
-        # Visit homepage to establish cookies
-        session.get("https://www.nseindia.com", headers={"User-Agent": "Mozilla/5.0"})
+        headers = {
+            "User-Agent": "Mozilla/5.0",
+            "Referer": "https://www.nseindia.com"
+        }
 
-        # Now hit API
-        response = session.get(url, headers={"User-Agent": "Mozilla/5.0"})
-        data = response.json()
-        return [item["symbol"] + ".NS" for item in data.get("data", [])]
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+
+        df = pd.read_csv(pd.compat.StringIO(response.text))
+        df = df[["SYMBOL", "NAME OF COMPANY"]]
+
+        stock_list = df.rename(columns={"SYMBOL": "code", "NAME OF COMPANY": "name"}).to_dict("records")
+        return stock_list
+
     except Exception as e:
-        print("Error fetching NSE list:", e)
+        print("Error fetching NSE stock list:", e)
         return []
