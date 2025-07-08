@@ -3,3 +3,4 @@ yfinance
 pandas
 pandas-ta
 requests-html
+lxml_html_clean
