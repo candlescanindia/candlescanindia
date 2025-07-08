@@ -9,11 +9,10 @@ def render_scan_results(results):
 
     st.markdown("### 📋 Scan Results")
 
-    # Use a responsive grid layout: two cards per row on wide screens, one on narrow
-    num_cols = 2 if st.columns([1, 1])[0].width > 400 else 1
-    for i in range(0, len(results), num_cols):
-        cols = st.columns(num_cols)
-        for j in range(num_cols):
+    # Show 2 cards per row (desktop), will stack on mobile naturally
+    for i in range(0, len(results), 2):
+        cols = st.columns(2)
+        for j in range(2):
             if i + j < len(results):
                 with cols[j]:
                     render_stock_card(results[i + j])
