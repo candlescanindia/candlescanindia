@@ -3,7 +3,7 @@
 import streamlit as st
 from datetime import datetime
 
-# ---------------- Candlestick Pattern Mapping ----------------
+# ---------------- Mapping ----------------
 pattern_type_map = {
     "Bullish Reversal": [
         "Bullish Engulfing", "Hammer", "Inverted Hammer", "Morning Star"
@@ -16,7 +16,7 @@ pattern_type_map = {
     ]
 }
 
-# Inverse mapping for auto-selecting type when pattern is selected
+# Reverse map
 pattern_to_type = {
     pattern: ptype
     for ptype, patterns in pattern_type_map.items()
@@ -44,17 +44,23 @@ def render_header():
     st.markdown("---")
 
 
-# ---------------- Scan Controls ----------------
+# ---------------- Controls ----------------
 def render_top_controls():
+    # Ensure session vars exist
+    if "pattern_selected" not in st.session_state:
+        st.session_state.pattern_selected = None
+    if "pattern_type" not in st.session_state:
+        st.session_state.pattern_type = ""
+
     show_filters = False
 
-    # Filter icon on right
-    filter_col = st.columns([10, 1])
-    with filter_col[1]:
+    # Filter icon top-right
+    top_row = st.columns([10, 1])
+    with top_row[1]:
         if st.button("🧰", help="Add Filters"):
             show_filters = True
 
-    # Duration + Pattern Type + Pattern + Scan
+    # Main control line
     col1, col2, col3, col4 = st.columns([1.5, 2, 3, 1])
     
     with col1:
@@ -63,38 +69,38 @@ def render_top_controls():
 
     with col2:
         st.markdown("**🧭 Pattern Type**")
-        pattern_type = st.selectbox(
+        pattern_type_input = st.selectbox(
             "", [""] + list(pattern_type_map.keys()),
-            index=0, key="pattern_type", label_visibility="collapsed"
+            index=0 if st.session_state.pattern_type == "" else list(pattern_type_map.keys()).index(st.session_state.pattern_type) + 1,
+            key="pattern_type_input", label_visibility="collapsed"
         )
+        st.session_state.pattern_type = pattern_type_input
 
     with col3:
         st.markdown("**📊 Pattern**")
-        # Filter patterns if type is selected
-        if pattern_type:
-            available_patterns = pattern_type_map.get(pattern_type, [])
-        else:
-            # Show all
-            available_patterns = list(pattern_to_type.keys())
-
-        pattern = st.selectbox(
-            "",
-            available_patterns,
-            key="pattern", label_visibility="collapsed",
-            index=0 if available_patterns else None
+        # Filter based on selected type
+        available_patterns = (
+            pattern_type_map.get(st.session_state.pattern_type, list(pattern_to_type.keys()))
+            if st.session_state.pattern_type else list(pattern_to_type.keys())
         )
 
-        # Auto-select pattern_type if pattern was chosen
-        if pattern and not pattern_type:
-            detected_type = pattern_to_type.get(pattern)
-            if detected_type:
-                st.session_state["pattern_type"] = detected_type
+        pattern = st.selectbox(
+            "", options=available_patterns, label_visibility="collapsed",
+            key="pattern_dropdown"
+        )
+
+        # If user selects a pattern (manually), update the type
+        if pattern != st.session_state.pattern_selected:
+            st.session_state.pattern_selected = pattern
+            inferred_type = pattern_to_type.get(pattern)
+            if inferred_type:
+                st.session_state.pattern_type = inferred_type
 
     with col4:
         st.markdown("**&nbsp;**")
         scan_clicked = st.button("🔎 Scan Now", use_container_width=True)
 
-    return duration, st.session_state.get("pattern_type", ""), pattern, show_filters, scan_clicked
+    return duration, st.session_state.pattern_type, st.session_state.pattern_selected, show_filters, scan_clicked
 
 
 # ---------------- Highlights ----------------
@@ -108,10 +114,10 @@ def render_highlights(matched_stocks, selected_pattern):
         st.info("No stocks matched the selected candlestick pattern.")
 
 
-# ---------------- Results Table ----------------
+# ---------------- Results ----------------
 def render_results_table(data):
     st.markdown("### 📋 Matched Stocks")
-    if data and not data.empty:
+    if data is not None and not data.empty:
         st.dataframe(
             data[["Stock Name", "Symbol", "LTP", "Exchange", "Pattern Formed On", "Pattern Duration"]],
             use_container_width=True,
