@@ -1,57 +1,27 @@
-# app.py
-
 import streamlit as st
 from ui.layout import (
     render_header,
-    render_top_controls
-)
-from ui.highlights import render_highlights
-from ui.results import render_results
-from utils.patterns import PATTERN_TYPE_MAP
-
-# Set Streamlit page config
-st.set_page_config(
-    page_title="CandleScan India",
-    layout="wide",
-    initial_sidebar_state="collapsed"
+    render_top_controls,
+    render_highlights
 )
 
-# ---------------------- UI Header ----------------------
-render_header()
+# Temporary mock scanning logic
+def scan_stocks(pattern, duration):
+    # Replace this logic with your actual pattern-matching scan engine
+    if pattern:
+        return ["RELIANCE", "INFY", "TCS"]
+    return []
 
-# ---------------------- Scan Controls ----------------------
-pattern_type, pattern, scan_clicked = render_top_controls()
+def main():
+    st.set_page_config(page_title="CandleScan India", layout="wide")
+    
+    render_header()
 
-# ---------------------- Data Simulation ----------------------
-# Replace with your real scanning logic
-def get_sample_matches(pattern_selected, duration):
-    sample = [
-        {
-            "Symbol": "RELIANCE",
-            "Name": "Reliance Industries",
-            "LTP": "2820.55",
-            "Exchange": "NSE",
-            "Pattern": pattern_selected,
-            "Time": "2025-07-08 15:30",
-            "Duration": duration
-        },
-        {
-            "Symbol": "INFY",
-            "Name": "Infosys Ltd",
-            "LTP": "1512.90",
-            "Exchange": "BSE",
-            "Pattern": pattern_selected,
-            "Time": "2025-07-08 15:30",
-            "Duration": duration
-        }
-    ]
-    return sample
+    duration, pattern_type, selected_pattern, show_filters, scan_clicked = render_top_controls()
 
-# ---------------------- Pattern Matching Logic ----------------------
-matched_stocks = []
+    if scan_clicked and selected_pattern:
+        matched_stocks = scan_stocks(selected_pattern, duration)
+        render_highlights(matched_stocks, selected_pattern)
 
-if scan_clicked and pattern:
-    matched_stocks = get_sample_matches(pattern, duration="1d")
-    render_highlights(matched_stocks, pattern)
-    render_results(matched_stocks)
-
+if __name__ == "__main__":
+    main()
