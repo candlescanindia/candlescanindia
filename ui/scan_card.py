@@ -1,35 +1,36 @@
+# ui/scan_card.py
+
 import streamlit as st
+from datetime import datetime
 
-def render_scan_results(results, scan_clicked):
-    st.markdown("### 📋 Scan Results")
-
-    if not scan_clicked:
-        st.info("Please click '🔎 Scan Now' to start scanning.")
-        return
-
-    if not results:
-        st.warning("No matching stocks found for the selected pattern.")
-        return
-
-    # Display results in two-column layout for better space utilization
-    num_cols = 2
-    rows = [results[i:i + num_cols] for i in range(0, len(results), num_cols)]
-
-    for row in rows:
-        cols = st.columns(num_cols)
-        for idx, stock in enumerate(row):
-            with cols[idx]:
-                render_stock_card(stock)
-
-def render_stock_card(stock):
+def render_scan_result(stock: dict, pattern: str, duration: str):
     """
-    Renders a single stock card. Expects `stock` to be a dictionary with at least:
-    - 'name': Stock name
-    - 'code': Stock symbol or NSE/BSE code
+    Renders a detailed stock scan result card.
+
+    stock: dict with keys 'name', 'code', 'price', 'rsi', 'timestamp'
+    pattern: string pattern name (e.g., 'Hammer')
+    duration: string chart timeframe (e.g., '15m', '1d')
     """
-    st.markdown(f"""
-        <div style="border: 1px solid #ddd; border-radius: 10px; padding: 1rem; margin-bottom: 1rem;">
-            <div style="font-size: 1.3rem; font-weight: 600; color: #1a1a1a;">{stock.get('name')}</div>
-            <div style="font-size: 0.9rem; color: #666;">{stock.get('code')}</div>
-        </div>
-    """, unsafe_allow_html=True)
+    name = stock.get("name", "")
+    code = stock.get("code", "")
+    price = stock.get("price", None)
+    rsi = stock.get("rsi", None)
+    timestamp = stock.get("timestamp", None)
+
+    dt_str = (
+        datetime.strftime(timestamp, "%d %b %Y, %I:%M %p") if timestamp else "N/A"
+    )
+    price_str = f"₹{price:.2f}" if price else "N/A"
+    rsi_str = f"{rsi:.1f}" if rsi else "N/A"
+
+    with st.container():
+        st.markdown(
+            f"""
+            <div style="
+                border-radius: 12px;
+                padding: 1.25rem 1.5rem;
+                margin-bottom: 1.25rem;
+                background: #f8f9fa;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+                ">
+                <div style="font-size: 1.2rem; font-weight: 600; color: #1f4e79;">📌 {name}</div>
