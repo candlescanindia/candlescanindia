@@ -3,7 +3,7 @@
 import streamlit as st
 from datetime import datetime
 
-# ---------------- Mapping ----------------
+# ---------------- Pattern Maps ----------------
 pattern_type_map = {
     "Bullish Reversal": [
         "Bullish Engulfing", "Hammer", "Inverted Hammer", "Morning Star"
@@ -16,7 +16,6 @@ pattern_type_map = {
     ]
 }
 
-# Reverse map
 pattern_to_type = {
     pattern: ptype
     for ptype, patterns in pattern_type_map.items()
@@ -46,23 +45,22 @@ def render_header():
 
 # ---------------- Controls ----------------
 def render_top_controls():
-    # Ensure session vars exist
     if "pattern_selected" not in st.session_state:
-        st.session_state.pattern_selected = None
+        st.session_state.pattern_selected = ""
     if "pattern_type" not in st.session_state:
-        st.session_state.pattern_type = ""
+        st.session_state.pattern_type = "Show All"
 
     show_filters = False
 
-    # Filter icon top-right
+    # Top filter icon
     top_row = st.columns([10, 1])
     with top_row[1]:
         if st.button("🧰", help="Add Filters"):
             show_filters = True
 
-    # Main control line
+    # Main controls row
     col1, col2, col3, col4 = st.columns([1.5, 2, 3, 1])
-    
+
     with col1:
         st.markdown("**⏱️ Duration**")
         duration = st.selectbox("", ["15m", "30m", "1d", "1wk"], index=2, label_visibility="collapsed")
@@ -70,31 +68,27 @@ def render_top_controls():
     with col2:
         st.markdown("**🧭 Pattern Type**")
         pattern_type_input = st.selectbox(
-            "", [""] + list(pattern_type_map.keys()),
-            index=0 if st.session_state.pattern_type == "" else list(pattern_type_map.keys()).index(st.session_state.pattern_type) + 1,
+            "", ["Show All"] + list(pattern_type_map.keys()),
+            index=(["Show All"] + list(pattern_type_map.keys())).index(st.session_state.pattern_type),
             key="pattern_type_input", label_visibility="collapsed"
         )
         st.session_state.pattern_type = pattern_type_input
 
     with col3:
         st.markdown("**📊 Pattern**")
-        # Filter based on selected type
         available_patterns = (
             pattern_type_map.get(st.session_state.pattern_type, list(pattern_to_type.keys()))
-            if st.session_state.pattern_type else list(pattern_to_type.keys())
+            if st.session_state.pattern_type != "Show All" else list(pattern_to_type.keys())
         )
 
         pattern = st.selectbox(
-            "", options=available_patterns, label_visibility="collapsed",
-            key="pattern_dropdown"
+            "", options=[""] + sorted(available_patterns), key="pattern_dropdown", label_visibility="collapsed"
         )
 
-        # If user selects a pattern (manually), update the type
-        if pattern != st.session_state.pattern_selected:
+        # When pattern selected manually, update type
+        if pattern and pattern != st.session_state.pattern_selected:
             st.session_state.pattern_selected = pattern
-            inferred_type = pattern_to_type.get(pattern)
-            if inferred_type:
-                st.session_state.pattern_type = inferred_type
+            st.session_state.pattern_type = pattern_to_type.get(pattern, "Show All")
 
     with col4:
         st.markdown("**&nbsp;**")
@@ -114,7 +108,7 @@ def render_highlights(matched_stocks, selected_pattern):
         st.info("No stocks matched the selected candlestick pattern.")
 
 
-# ---------------- Results ----------------
+# ---------------- Results Table ----------------
 def render_results_table(data):
     st.markdown("### 📋 Matched Stocks")
     if data is not None and not data.empty:
