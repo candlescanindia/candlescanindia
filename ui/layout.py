@@ -1,15 +1,17 @@
 import streamlit as st
+import pandas as pd
 from datetime import datetime
+from utils.nse_stock_list import fetch_nse_stock_list
 
 # ---------------- Pattern Maps ----------------
 pattern_type_map = {
     "Bullish Reversal": [
-        "Bullish Engulfing", "Hammer", "Inverted Hammer", "Morning Star", "Piercing Line",
-        "Three White Soldiers", "Tweezer Bottom", "Inverted Hammer", "Bullish Harami"
+        "Bullish Engulfing", "Hammer", "Inverted Hammer", "Morning Star",
+        "Piercing Line", "Three White Soldiers", "Tweezer Bottom", "Bullish Harami"
     ],
     "Bearish Reversal": [
-        "Bearish Engulfing", "Evening Star", "Hanging Man", "Shooting Star", "Dark Cloud Cover",
-        "Three Black Crows", "Tweezer Top", "Bearish Harami"
+        "Bearish Engulfing", "Evening Star", "Hanging Man", "Shooting Star",
+        "Dark Cloud Cover", "Three Black Crows", "Tweezer Top", "Bearish Harami"
     ],
     "Neutral": [
         "Doji", "Dragonfly Doji", "Gravestone Doji", "Spinning Top"
@@ -21,6 +23,7 @@ pattern_to_type = {
     for ptype, patterns in pattern_type_map.items()
     for pattern in patterns
 }
+
 
 # ---------------- Header ----------------
 def render_header():
@@ -41,23 +44,23 @@ def render_header():
     """, unsafe_allow_html=True)
     st.markdown("---")
 
-# ---------------- Controls ----------------
+
+# ---------------- Main Scan Controls ----------------
 def render_top_controls():
-    # Initialize session states
     st.session_state.setdefault("pattern_selected", "")
     st.session_state.setdefault("pattern_type", "Show All")
 
     show_filters = False
 
-    # Top toolbar: filter icon
+    # Optional Filters toggle
     top_row = st.columns([10, 1])
     with top_row[1]:
         if st.button("🧰", help="Add Filters"):
             show_filters = True
 
-    # Control panel for scanning
+    # Control Row
     col1, col2, col3, col4 = st.columns([1.5, 2, 3, 1])
-
+    
     with col1:
         st.markdown("**⏱️ Duration**")
         duration = st.selectbox(
@@ -93,17 +96,19 @@ def render_top_controls():
         st.markdown("**&nbsp;**")
         scan_clicked = st.button("🔎 Scan Now", use_container_width=True)
 
-    # Optional: Preview fetched stock symbols
+    # Preview NSE Stock List
     with st.expander("🔍 Preview NSE Stock List"):
         stock_list = fetch_nse_stock_list()
         if isinstance(stock_list, list) and stock_list:
             df = pd.DataFrame(stock_list)
             st.dataframe(df.head(50), use_container_width=True)
         else:
-            st.warning("No stock data fetched.")
+            st.warning("No stock data fetched. Check source or network.")
 
     return duration, st.session_state.pattern_type, st.session_state.pattern_selected, show_filters, scan_clicked
-# ---------------- Optional Filters ----------------
+
+
+# ---------------- Filter Controls ----------------
 def render_filter_controls():
     st.markdown("### 🧰 Filter Stocks")
     col1, col2, col3 = st.columns(3)
