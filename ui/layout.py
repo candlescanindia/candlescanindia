@@ -1,5 +1,3 @@
-# ui/layout.py
-
 import streamlit as st
 import pandas as pd
 from datetime import datetime
@@ -97,7 +95,7 @@ def render_top_controls():
         scan_clicked = st.button("🔎 Scan Now", use_container_width=True)
 
     # Stock list preview with new NSE fetcher
-   with st.expander("🔍 Preview NSE Stock List"):
+    with st.expander("🔍 Preview NSE Stock List"):
         stock_list = fetch_nse_stock_list()
         if stock_list:
             df = pd.DataFrame(stock_list)
@@ -105,4 +103,5 @@ def render_top_controls():
             st.dataframe(df.head(50), use_container_width=True)
         else:
             st.error("⚠️ Could not load stock data. Please check the CSV format.")
+
     return duration, st.session_state.pattern_type, st.session_state.pattern_selected, show_filters, scan_clicked
