@@ -1,18 +1,18 @@
-# ui/layout.py
-
 import streamlit as st
 from datetime import datetime
 
 # ---------------- Pattern Maps ----------------
 pattern_type_map = {
     "Bullish Reversal": [
-        "Bullish Engulfing", "Hammer", "Inverted Hammer", "Morning Star"
+        "Bullish Engulfing", "Hammer", "Inverted Hammer", "Morning Star", "Piercing Line",
+        "Three White Soldiers", "Tweezer Bottom", "Inverted Hammer", "Bullish Harami"
     ],
     "Bearish Reversal": [
-        "Bearish Engulfing", "Evening Star", "Hanging Man", "Shooting Star"
+        "Bearish Engulfing", "Evening Star", "Hanging Man", "Shooting Star", "Dark Cloud Cover",
+        "Three Black Crows", "Tweezer Top", "Bearish Harami"
     ],
     "Neutral": [
-        "Doji", "Spinning Top"
+        "Doji", "Dragonfly Doji", "Gravestone Doji", "Spinning Top"
     ]
 }
 
@@ -48,6 +48,7 @@ def render_top_controls():
     if "pattern_type" not in st.session_state:
         st.session_state.pattern_type = "Show All"
 
+    # Whether to show extra filters
     show_filters = False
 
     # Top filter icon
@@ -56,12 +57,15 @@ def render_top_controls():
         if st.button("🧰", help="Add Filters"):
             show_filters = True
 
-    # Main controls row
+    # Main control panel
     col1, col2, col3, col4 = st.columns([1.5, 2, 3, 1])
 
     with col1:
         st.markdown("**⏱️ Duration**")
-        duration = st.selectbox("", ["15m", "30m", "1d", "1wk"], index=2, label_visibility="collapsed")
+        duration = st.selectbox(
+            "", ["15m", "30m", "1d", "1wk"],
+            index=2, key="duration", label_visibility="collapsed"
+        )
 
     with col2:
         st.markdown("**🧭 Pattern Type**")
@@ -92,3 +96,25 @@ def render_top_controls():
         scan_clicked = st.button("🔎 Scan Now", use_container_width=True)
 
     return duration, st.session_state.pattern_type, st.session_state.pattern_selected, show_filters, scan_clicked
+
+# ---------------- Optional Filters ----------------
+def render_filter_controls():
+    st.markdown("### 🧰 Filter Stocks")
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        min_volume = st.number_input("📦 Minimum Volume", min_value=0, value=100000)
+
+    with col2:
+        min_price = st.number_input("💰 Minimum Price", min_value=0.0, value=0.0)
+
+    with col3:
+        max_price = st.number_input("💸 Maximum Price", min_value=0.0, value=10000.0)
+
+    col4, col5 = st.columns(2)
+    with col4:
+        min_rsi = st.slider("📈 Minimum RSI", 0.0, 100.0, 0.0)
+    with col5:
+        max_rsi = st.slider("📉 Maximum RSI", 0.0, 100.0, 100.0)
+
+    return min_volume, min_price, max_price, min_rsi, max_rsi
