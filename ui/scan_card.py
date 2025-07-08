@@ -2,31 +2,33 @@
 
 import streamlit as st
 
-def render_scan_card(stock):
+def render_scan_results(matched_data: list):
     """
-    Displays a stock scan result in a card-style layout.
+    Display scanned stock results in a card-style layout.
 
-    :param stock: Dictionary with keys:
-        - symbol (str)
-        - name (str)
-        - pattern (str)
-        - price (float)
-        - exchange (str)
-        - time (str)
-        - duration (str)
+    matched_data: List of dicts, each with keys:
+        - stock_name
+        - symbol
+        - ltp (last traded price)
+        - exchange
+        - pattern_time
+        - duration
     """
-    st.markdown(
-        f"""
-        <div style="border: 1px solid #e0e0e0; border-radius: 12px; padding: 16px; margin-bottom: 12px; background-color: #f9f9f9;">
-            <div style="font-size: 1.1rem; font-weight: 600; color: #1a237e;">{stock['symbol']} <span style="color: #555;">({stock['name']})</span></div>
-            <div style="margin-top: 6px;">
-                <strong>📊 Pattern:</strong> {stock['pattern']} <br>
-                <strong>⏱ Duration:</strong> {stock['duration']} &nbsp;&nbsp; 
-                <strong>🕒 Time:</strong> {stock['time']} <br>
-                <strong>💰 LTP:</strong> ₹{stock['price']} &nbsp;&nbsp; 
-                <strong>🏦 Exchange:</strong> {stock['exchange']}
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    st.markdown("### 📋 Scan Results")
+
+    if not matched_data:
+        st.warning("No matching stocks found for the selected pattern.")
+        return
+
+    for stock in matched_data:
+        with st.container():
+            st.markdown(
+                f"""
+                <div style="border: 1px solid #ddd; border-radius: 10px; padding: 15px; margin-bottom: 10px; background-color: #f9f9f9;">
+                    <h4 style="margin: 0; color: #1f4e79;">{stock['stock_name']} ({stock['symbol']})</h4>
+                    <p style="margin: 5px 0;">💹 <b>LTP:</b> ₹{stock['ltp']} — <b>Exchange:</b> {stock['exchange']}</p>
+                    <p style="margin: 5px 0;">🕒 <b>Pattern Time:</b> {stock['pattern_time']} | <b>Duration:</b> {stock['duration']}</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
