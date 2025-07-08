@@ -1,59 +1,59 @@
 import yfinance as yf
 import pandas as pd
-import streamlit as st
-from nsetools import Nse
+from utils.nse_stock_list import fetch_nse_stock_list
 
-# --- Load NSE stock list dynamically ---
-st.write("Loading NSE stock symbols...")  # optional console log
+# Load NSE tickers once
+NSE_TICKERS = fetch_nse_stock_list()
 
-@st.cache_data(ttl=86400)
-def load_nse_symbols():
-    nse = Nse()
-    codes = nse.get_stock_codes()  # returns list of tickers
-    # First item is usually header; skip it
-    return [code for code in codes if code and code.isalpha()]
+# ----------------- Data Fetching -----------------
 
-NSE_TICKERS = load_nse_symbols()
+def fetch_stock_data(ticker: str, duration: str) -> pd.DataFrame | None:
+    interval_map = {"15m": "15m", "30m": "30m", "1d": "1d", "1wk": "1wk"}
+    period_map = {"15m": "1d", "30m": "2d", "1d": "60d", "1wk": "1y"}
 
-# --- Cached fetch ---
-@st.cache_data(ttl=3600)
-def fetch_stock_data(ticker, duration):
-    interval_map = {"15m":"15m","30m":"30m","1d":"1d","1wk":"1wk"}
-    period_map = {"15m":"1d","30m":"2d","1d":"60d","1wk":"1y"}
     try:
-        df = yf.download(tickers=f"{ticker}.NS", interval=interval_map[duration],
-                         period=period_map[duration], progress=False)
+        df = yf.download(
+            tickers=f"{ticker}.NS",
+            interval=interval_map[duration],
+            period=period_map[duration],
+            progress=False
+        )
         return df if not df.empty else None
-    except:
+    except Exception:
         return None
 
-def compute_rsi(series, period=14):
+
+# ----------------- RSI Calculation -----------------
+
+def compute_rsi(series: pd.Series, period: int = 14) -> float:
     delta = series.diff()
     gain = delta.where(delta > 0, 0).rolling(period).mean()
     loss = -delta.where(delta < 0, 0).rolling(period).mean()
     rs = gain / loss
     return 100 - (100 / (1 + rs)).iloc[-1]
-    
-# ---------------- Pattern Functions ----------------
-def is_bullish_engulfing(df):
-    prev, last = df.iloc[-2], df.iloc[-1]
-    return (
-        prev['Close'] < prev['Open'] and last['Close'] > last['Open'] and
-        last['Open'] < prev['Close'] and last['Close'] > prev['Open']
-    )
 
-def is_bearish_engulfing(df):
-    prev, last = df.iloc[-2], df.iloc[-1]
-    return (
-        prev['Close'] > prev['Open'] and last['Close'] < last['Open'] and
-        last['Open'] > prev['Close'] and last['Close'] < prev['Open']
-    )
+
+# ----------------- Candlestick Pattern Logic -----------------
+
+def is_bullish_engulfing(df): return (
+    df.iloc[-2]['Close'] < df.iloc[-2]['Open'] and
+    df.iloc[-1]['Close'] > df.iloc[-1]['Open'] and
+    df.iloc[-1]['Open'] < df.iloc[-2]['Close'] and
+    df.iloc[-1]['Close'] > df.iloc[-2]['Open']
+)
+
+def is_bearish_engulfing(df): return (
+    df.iloc[-2]['Close'] > df.iloc[-2]['Open'] and
+    df.iloc[-1]['Close'] < df.iloc[-1]['Open'] and
+    df.iloc[-1]['Open'] > df.iloc[-2]['Close'] and
+    df.iloc[-1]['Close'] < df.iloc[-2]['Open']
+)
 
 def is_hammer(df):
     last = df.iloc[-1]
     body = abs(last['Close'] - last['Open'])
-    lower = min(last['Open'], last['Close']) - last['Low']
-    upper = last['High'] - max(last['Open'], last['Close'])
+    lower = min(last['Close'], last['Open']) - last['Low']
+    upper = last['High'] - max(last['Close'], last['Open'])
     return lower > 2 * body and upper < body
 
 def is_inverted_hammer(df):
@@ -63,11 +63,8 @@ def is_inverted_hammer(df):
     lower = min(last['Close'], last['Open']) - last['Low']
     return upper > 2 * body and lower < body
 
-def is_hanging_man(df):
-    return is_hammer(df)
-
-def is_shooting_star(df):
-    return is_inverted_hammer(df)
+def is_hanging_man(df): return is_hammer(df)
+def is_shooting_star(df): return is_inverted_hammer(df)
 
 def is_doji(df):
     last = df.iloc[-1]
@@ -93,7 +90,8 @@ def is_morning_star(df):
     return (
         a['Close'] < a['Open'] and
         abs(b['Close'] - b['Open']) < 0.3 * (b['High'] - b['Low']) and
-        c['Close'] > c['Open'] and c['Close'] > (a['Open'] + a['Close']) / 2
+        c['Close'] > c['Open'] and
+        c['Close'] > (a['Open'] + a['Close']) / 2
     )
 
 def is_evening_star(df):
@@ -102,7 +100,8 @@ def is_evening_star(df):
     return (
         a['Close'] > a['Open'] and
         abs(b['Close'] - b['Open']) < 0.3 * (b['High'] - b['Low']) and
-        c['Close'] < c['Open'] and c['Close'] < (a['Open'] + a['Close']) / 2
+        c['Close'] < c['Open'] and
+        c['Close'] < (a['Open'] + a['Close']) / 2
     )
 
 def is_piercing_line(df):
@@ -139,19 +138,13 @@ def is_bearish_harami(df):
 
 def is_three_white_soldiers(df):
     a, b, c = df.iloc[-3], df.iloc[-2], df.iloc[-1]
-    return all([
-        x['Close'] > x['Open'] for x in (a, b, c)
-    ]) and all([
-        b['Open'] > a['Open'], c['Open'] > b['Open']
-    ])
+    return all(x['Close'] > x['Open'] for x in [a, b, c]) and \
+           b['Open'] > a['Open'] and c['Open'] > b['Open']
 
 def is_three_black_crows(df):
     a, b, c = df.iloc[-3], df.iloc[-2], df.iloc[-1]
-    return all([
-        x['Close'] < x['Open'] for x in (a, b, c)
-    ]) and all([
-        b['Open'] < a['Open'], c['Open'] < b['Open']
-    ])
+    return all(x['Close'] < x['Open'] for x in [a, b, c]) and \
+           b['Open'] < a['Open'] and c['Open'] < b['Open']
 
 def is_tweezer_top(df):
     prev, last = df.iloc[-2], df.iloc[-1]
@@ -161,7 +154,9 @@ def is_tweezer_bottom(df):
     prev, last = df.iloc[-2], df.iloc[-1]
     return abs(prev['Low'] - last['Low']) < 0.1
 
-# ---------------- Pattern Registry ----------------
+
+# ----------------- Pattern Registry -----------------
+
 PATTERN_FUNCTIONS = {
     "Bullish Engulfing": is_bullish_engulfing,
     "Bearish Engulfing": is_bearish_engulfing,
@@ -186,39 +181,52 @@ PATTERN_FUNCTIONS = {
 }
 
 
-# --- Main scan function with filters ---
+# ----------------- Main Entry Point -----------------
+
 def run_candlestick_scan(
-    duration, pattern,
-    min_volume=0, min_price=None, max_price=None,
-    min_rsi=None, max_rsi=None
-):
+    duration: str,
+    pattern: str,
+    min_volume: int = 0,
+    min_price: float | None = None,
+    max_price: float | None = None,
+    min_rsi: float | None = None,
+    max_rsi: float | None = None,
+    stock_list: list[str] | None = None,
+) -> list[dict]:
+    """
+    Takes parameters from UI and returns matching stocks.
+    """
     results = []
-    func = PATTERN_FUNCTIONS.get(pattern)
-    if not func:
+    pattern_func = PATTERN_FUNCTIONS.get(pattern)
+
+    if not pattern_func:
         return results
 
-    for ticker in NSE_TICKERS:
+    tickers_to_check = stock_list if stock_list else NSE_TICKERS
+
+    for ticker in tickers_to_check:
         df = fetch_stock_data(ticker, duration)
         if df is None or len(df) < 3:
             continue
+
         last = df.iloc[-1]
-        # Volume filter
+
         if min_volume and last["Volume"] < min_volume:
             continue
-        # Price filters
-        price = last["Close"]
-        if (min_price and price < min_price) or (max_price and price > max_price):
+        if min_price and last["Close"] < min_price:
             continue
-        # RSI filter
+        if max_price and last["Close"] > max_price:
+            continue
+
         if min_rsi or max_rsi:
             rsi = compute_rsi(df["Close"])
             if (min_rsi and rsi < min_rsi) or (max_rsi and rsi > max_rsi):
                 continue
-        # Pattern check
+
         try:
-            if func(df):
+            if pattern_func(df):
                 results.append({"name": ticker, "code": f"{ticker}.NS"})
-        except:
+        except Exception:
             continue
 
     return results
