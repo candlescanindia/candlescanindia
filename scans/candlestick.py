@@ -1,13 +1,13 @@
 import yfinance as yf
 import pandas as pd
 
-# Sample NSE stock tickers — you can replace this with a full list later
+# Sample NSE stock tickers — replace with full list for production
 NSE_TICKERS = [
     "RELIANCE.NS", "TCS.NS", "INFY.NS", "HDFCBANK.NS", "ICICIBANK.NS",
     "ITC.NS", "LT.NS", "SBIN.NS", "AXISBANK.NS", "KOTAKBANK.NS"
 ]
 
-# Fetch data using yfinance
+# --- Fetch data using yfinance ---
 def fetch_stock_data(ticker, duration):
     interval_map = {
         "15m": "15m",
@@ -34,8 +34,7 @@ def fetch_stock_data(ticker, duration):
         print(f"Error fetching data for {ticker}: {e}")
         return None
 
-# --- Pattern detection functions (TA-Lib Free) ---
-
+# --- Pattern detection logic ---
 def is_bullish_engulfing(df):
     prev = df.iloc[-2]
     last = df.iloc[-1]
@@ -72,22 +71,20 @@ def is_doji(df):
     range_ = last['High'] - last['Low']
     return body < 0.1 * range_
 
-# Add more patterns here...
-
-# Mapping pattern names to detection functions
+# --- Pattern registry ---
 PATTERN_FUNCTIONS = {
     "Bullish Engulfing": is_bullish_engulfing,
     "Bearish Engulfing": is_bearish_engulfing,
     "Hammer": is_hammer,
     "Doji": is_doji,
-    # Add more patterns as needed
+    # Add more patterns here
 }
 
-# --- Main scan runner ---
-def run_candlestick_scan(duration, pattern):
+# --- Main scan function ---
+def run_candlestick_scan(duration, pattern_type=None, pattern=None, filters_enabled=False):
     results = []
 
-    if pattern not in PATTERN_FUNCTIONS:
+    if not pattern or pattern not in PATTERN_FUNCTIONS:
         return results
 
     pattern_func = PATTERN_FUNCTIONS[pattern]
