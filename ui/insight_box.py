@@ -1,6 +1,6 @@
 import streamlit as st
 
-# Dummy precomputed insights — replace this with dynamic loading later
+# Dummy precomputed insights — replace with real-time or scheduled data later
 precomputed_insights = [
     {
         "pattern": "Doji",
