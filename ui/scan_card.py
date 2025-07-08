@@ -7,15 +7,45 @@ def render_scan_results(results):
         st.warning("No matching stocks found.")
         return
 
-    st.markdown("### 📋 Scan Results")
+    st.markdown("""
+        <style>
+        .sticky-results {
+            position: -webkit-sticky;
+            position: sticky;
+            top: 90px;
+            background: #ffffff;
+            z-index: 99;
+            padding-top: 0.5rem;
+        }
+        .results-wrapper {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        @media (max-width: 768px) {
+            .sticky-results {
+                position: static;
+                padding-top: 0;
+            }
+            .results-wrapper {
+                max-height: none;
+                overflow-y: visible;
+            }
+        }
+        </style>
+        <div class="sticky-results">
+            <h4>📋 Scan Results</h4>
+            <div class="results-wrapper">
+    """, unsafe_allow_html=True)
 
-    # Show 2 cards per row (desktop), will stack on mobile naturally
+    # Render the cards inside the sticky container
     for i in range(0, len(results), 2):
         cols = st.columns(2)
         for j in range(2):
             if i + j < len(results):
                 with cols[j]:
                     render_stock_card(results[i + j])
+
+    st.markdown("</div></div>", unsafe_allow_html=True)
 
 
 def render_stock_card(stock):
