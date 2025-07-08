@@ -1,19 +1,12 @@
 # ui/layout.py
 
 import streamlit as st
-from datetime import datetime
 
 # ---------------- Pattern Maps ----------------
 pattern_type_map = {
-    "Bullish Reversal": [
-        "Bullish Engulfing", "Hammer", "Inverted Hammer", "Morning Star"
-    ],
-    "Bearish Reversal": [
-        "Bearish Engulfing", "Evening Star", "Hanging Man", "Shooting Star"
-    ],
-    "Neutral": [
-        "Doji", "Spinning Top"
-    ]
+    "Bullish Reversal": ["Bullish Engulfing", "Hammer", "Inverted Hammer", "Morning Star"],
+    "Bearish Reversal": ["Bearish Engulfing", "Evening Star", "Hanging Man", "Shooting Star"],
+    "Neutral": ["Doji", "Spinning Top"]
 }
 
 pattern_to_type = {
@@ -21,7 +14,6 @@ pattern_to_type = {
     for ptype, patterns in pattern_type_map.items()
     for pattern in patterns
 }
-
 
 # ---------------- Header ----------------
 def render_header():
@@ -42,7 +34,6 @@ def render_header():
     """, unsafe_allow_html=True)
     st.markdown("---")
 
-
 # ---------------- Controls ----------------
 def render_top_controls():
     if "pattern_selected" not in st.session_state:
@@ -50,15 +41,6 @@ def render_top_controls():
     if "pattern_type" not in st.session_state:
         st.session_state.pattern_type = "Show All"
 
-    show_filters = False
-
-    # Top filter icon
-    top_row = st.columns([10, 1])
-    with top_row[1]:
-        if st.button("🧰", help="Add Filters"):
-            show_filters = True
-
-    # Main controls row
     col1, col2, col3, col4 = st.columns([1.5, 2, 3, 1])
 
     with col1:
@@ -69,7 +51,7 @@ def render_top_controls():
         st.markdown("**🧭 Pattern Type**")
         pattern_type_input = st.selectbox(
             "", ["Show All"] + list(pattern_type_map.keys()),
-            index=( ["Show All"] + list(pattern_type_map.keys()) ).index(st.session_state.pattern_type),
+            index=(["Show All"] + list(pattern_type_map.keys()]).index(st.session_state.pattern_type),
             key="pattern_type_input", label_visibility="collapsed"
         )
         st.session_state.pattern_type = pattern_type_input
@@ -93,15 +75,4 @@ def render_top_controls():
         st.markdown("**&nbsp;**")
         scan_clicked = st.button("🔎 Scan Now", use_container_width=True)
 
-    return duration, st.session_state.pattern_type, st.session_state.pattern_selected, show_filters, scan_clicked
-
-
-# ---------------- Highlights ----------------
-def render_highlights(matched_stocks, selected_pattern):
-    st.markdown("### 🟢 Highlights")
-    if matched_stocks:
-        st.success(f"🕒 As of {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} — Pattern: **{selected_pattern}**")
-        st.markdown(f"**{len(matched_stocks)} stocks** formed this pattern today:")
-        st.write(", ".join(matched_stocks))
-    else:
-        st.info("No stocks matched the selected candlestick pattern.")
+    return duration, st.session_state.pattern_type, st.session_state.pattern_selected, False, scan_clicked
