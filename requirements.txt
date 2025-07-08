@@ -2,3 +2,4 @@
 streamlit-extras
 yfinance
 talib
+pip
