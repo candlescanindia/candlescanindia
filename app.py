@@ -4,48 +4,40 @@ import streamlit as st
 from ui.layout import render_header, render_top_controls
 from ui.scan_card import render_scan_results
 
-# Placeholder function to simulate pattern scan
-def perform_scan(duration, pattern_type, pattern):
-    # Mock data
-    if not pattern:
-        return []
-
-    return [
-        {
-            "stock_name": "Reliance Industries",
-            "symbol": "RELIANCE",
-            "ltp": 2748.35,
-            "exchange": "NSE",
-            "pattern_time": "2025-07-08 14:15",
-            "duration": duration
-        },
-        {
-            "stock_name": "Infosys Ltd",
-            "symbol": "INFY",
-            "ltp": 1502.20,
-            "exchange": "BSE",
-            "pattern_time": "2025-07-08 14:15",
-            "duration": duration
-        },
-        {
-            "stock_name": "Tata Motors",
-            "symbol": "TATAMOTORS",
-            "ltp": 982.55,
-            "exchange": "NSE",
-            "pattern_time": "2025-07-08 14:15",
-            "duration": duration
-        }
-    ]
+# Simulated scan logic for demonstration (replace with real logic)
+def perform_scan(duration, pattern):
+    # Placeholder: Return dummy data
+    if pattern:
+        return [
+            {
+                "name": "Reliance Industries",
+                "symbol": "RELIANCE",
+                "price": 2850.50,
+                "exchange": "NSE",
+                "timestamp": "2025-07-08 15:30",
+                "duration": duration
+            },
+            {
+                "name": "Tata Consultancy Services",
+                "symbol": "TCS",
+                "price": 3755.75,
+                "exchange": "BSE",
+                "timestamp": "2025-07-08 15:30",
+                "duration": duration
+            }
+        ]
+    return []
 
 def main():
     st.set_page_config(page_title="CandleScan India", layout="wide")
+    
     render_header()
 
     duration, pattern_type, pattern, show_filters, scan_clicked = render_top_controls()
 
     matched_results = []
     if scan_clicked and pattern:
-        matched_results = perform_scan(duration, pattern_type, pattern)
+        matched_results = perform_scan(duration, pattern)
 
     render_scan_results(matched_results)
 
