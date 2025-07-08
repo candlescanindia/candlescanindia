@@ -1,25 +1,24 @@
-# utils/nse_stock_list.py
-
-from nsetools import Nse
+import requests
 import pandas as pd
 
 def fetch_nse_stock_list():
-    """
-    Fetches all NSE stock codes using nsetools.
+    url = "https://www.nseindia.com/api/equity-stockIndices?index=NIFTY%20500"
+    headers = {
+        "User-Agent": "Mozilla/5.0",
+        "Referer": "https://www.nseindia.com/"
+    }
 
-    Returns:
-        List[dict]: Each dict contains 'name' and 'code' of a stock.
-    """
-    nse = Nse()
     try:
-        all_stock_codes = nse.get_stock_codes()
-        # Remove the first item, which is a header ("SYMBOL": "Company Name")
-        stock_list = [
-            {"code": symbol, "name": name}
-            for symbol, name in all_stock_codes.items()
-            if symbol != "SYMBOL"
-        ]
-        return stock_list
+        with requests.Session() as s:
+            s.headers.update(headers)
+            # Make an initial request to establish cookies
+            s.get("https://www.nseindia.com", timeout=5)
+            response = s.get(url, timeout=10)
+
+        data = response.json()
+        stock_list = data.get("data", [])
+        return [{"name": stock["symbol"], "code": stock["symbol"]} for stock in stock_list]
+
     except Exception as e:
-        print(f"[ERROR] Failed to fetch stock list: {e}")
+        print(f"❌ Error fetching stock list from NSE: {e}")
         return []
