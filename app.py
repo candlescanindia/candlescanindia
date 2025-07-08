@@ -1,39 +1,33 @@
 import streamlit as st
-from layout.top_controls import render_top_controls
+from ui.layout import render_header, render_top_controls
 from scans.candlestick import run_candlestick_scan
 from ui.scan_card import display_scan_results
 from ui.insight_box import show_insight_box
 
 def main():
     st.set_page_config(page_title="CandleScan India", layout="wide")
-    
-    st.markdown(
-        "<h1 style='text-align: center;'>🕯️ CandleScan India</h1>",
-        unsafe_allow_html=True
-    )
-    st.markdown(
-        "<p style='text-align: center; color: gray;'>Scan Indian stocks based on candlestick patterns</p>",
-        unsafe_allow_html=True
-    )
-    
-    # Top control panel (modular)
+
+    # Header section
+    render_header()
+
+    # Top controls (returns all user selections)
     duration, pattern_type, pattern_selected, show_filters, scan_clicked = render_top_controls()
-    
-    # Show general insights
+
+    # Insight box (always visible)
     show_insight_box()
-    
-    # Run scan if button clicked
+
+    # Run scan only when button clicked and a pattern is selected
     if scan_clicked and pattern_selected:
-        with st.spinner("🔍 Scanning stocks..."):
-            matching_stocks = run_candlestick_scan(
+        with st.spinner("🔍 Scanning Indian market..."):
+            results = run_candlestick_scan(
                 duration=duration,
                 pattern_type=pattern_type,
                 pattern=pattern_selected,
                 filters_enabled=show_filters
             )
-        display_scan_results(matching_stocks, pattern_selected)
+        display_scan_results(results, pattern_selected)
     elif scan_clicked:
-        st.warning("Please select a pattern before scanning.")
+        st.warning("Please select a candlestick pattern before scanning.")
 
 if __name__ == "__main__":
     main()
