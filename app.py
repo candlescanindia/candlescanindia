@@ -2,56 +2,53 @@
 
 import streamlit as st
 from ui.layout import render_header, render_top_controls
-from ui.insight_box import render_insight_box
-from ui.scan_card import render_scan_results
 from scans.candlestick import run_candlestick_scan
+from ui.scan_card import render_scan_result  # Optional: card-style result
+# If no card layout yet, comment out above and just print raw results
 
-def main():
-    st.set_page_config(page_title="CandleScan India", layout="wide")
-    render_header()
+st.set_page_config(page_title="CandleScan India", layout="wide")
+render_header()
 
-    # Top Controls
-    duration, pattern_type, pattern_selected, show_filters, scan_clicked = render_top_controls()
+# Controls
+duration, pattern_type, pattern_selected, show_filters, scan_clicked = render_top_controls()
 
-    # Additional Filters
-    filters = {}
-    if show_filters:
-        with st.expander("🔧 Advanced Filters", expanded=True):
-            col1, col2, col3 = st.columns(3)
+# Filters (if 🧰 clicked)
+min_volume = min_price = max_price = min_rsi = max_rsi = None
+if show_filters:
+    with st.expander("🔧 Additional Filters", expanded=True):
+        col1, col2, col3 = st.columns(3)
 
-            with col1:
-                filters["min_volume"] = st.number_input("Minimum Volume", min_value=0, value=100000)
+        with col1:
+            min_volume = st.number_input("Min Volume", min_value=0, value=0, step=1000)
+        with col2:
+            min_price = st.number_input("Min Price", min_value=0.0, value=0.0, step=1.0)
+        with col3:
+            max_price = st.number_input("Max Price", min_value=0.0, value=10000.0, step=1.0)
 
-            with col2:
-                filters["min_price"] = st.number_input("Min Price", min_value=0.0, value=10.0)
-                filters["max_price"] = st.number_input("Max Price", min_value=0.0, value=1000.0)
+        col4, col5 = st.columns(2)
+        with col4:
+            min_rsi = st.slider("Min RSI", 0, 100, 0)
+        with col5:
+            max_rsi = st.slider("Max RSI", 0, 100, 100)
 
-            with col3:
-                filters["min_rsi"] = st.slider("Min RSI", 0, 100, 30)
-                filters["max_rsi"] = st.slider("Max RSI", 0, 100, 70)
-
-    # Run Scan
-    results = []
-    if scan_clicked:
+# Run scan
+if scan_clicked and pattern_selected:
+    st.info(f"Scanning for **{pattern_selected}** pattern ({duration})...")
+    with st.spinner("Fetching and analyzing stock data..."):
         results = run_candlestick_scan(
             duration=duration,
             pattern=pattern_selected,
-            min_volume=filters.get("min_volume", 0),
-            min_price=filters.get("min_price", None),
-            max_price=filters.get("max_price", None),
-            min_rsi=filters.get("min_rsi", None),
-            max_rsi=filters.get("max_rsi", None)
+            min_volume=min_volume,
+            min_price=min_price,
+            max_price=max_price,
+            min_rsi=min_rsi,
+            max_rsi=max_rsi,
         )
 
-    # Results
-    render_scan_results(results, scan_clicked)
-
-    # Insights
-    render_insight_box([
-        "Doji patterns are forming on mid-cap pharma stocks.",
-        "Volume breakout seen in bullish engulfing setups.",
-        "Watch RSI > 60 with bullish hammer in small caps."
-    ])
-
-if __name__ == "__main__":
-    main()
+    if results:
+        st.success(f"✅ Found {len(results)} matching stock(s).")
+        for stock in results:
+            render_scan_result(stock)  # pretty card
+            # st.write(stock)  # uncomment this line instead if no scan_card yet
+    else:
+        st.warning("⚠️ No matching stocks found. Try adjusting your filters or pattern.")
